@@ -1,0 +1,5 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/rotoeye/public_html/
+    - /bin/cp -R RotoeYe.cloud $DEPLOYPATH

@@ -1,0 +1,1 @@
+<?php echo $view; ?><?php /**PATH C:\xampp\htdocs\rotoeye\resources\views/roto/reports.blade.php ENDPATH**/ ?>
