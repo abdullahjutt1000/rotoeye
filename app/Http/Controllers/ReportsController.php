@@ -7315,7 +7315,6 @@ class ReportsController extends Controller {
     }
     public function splittingRecords($record, $nextrecord, $endd, $data) {
         //dump($data);
-        // dump($record);
 
         $date1 = $endd;
         $date2 = $record['to'];
