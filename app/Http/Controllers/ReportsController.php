@@ -29,27 +29,25 @@ use Mail;
 use DateTime;
 use Carbon\Carbon;
 
-class ReportsController extends Controller
-{
+class ReportsController extends Controller {
 
-    public function reports($id)
-    {
+    public function reports($id) {
         $user_id = Session::get('user_id');
-        if (isset($user_id)) {
+        if(isset($user_id)) {
             $data['path'] = Route::getFacadeRoot()->current()->uri();
             $machine_id = Crypt::decrypt($id);
-            if (Session::get('rights') == 0) {
+            if(Session::get('rights') == 0) {
                 $data['layout'] = 'web-layout';
-            } elseif (Session::get('rights') == 1) {
+            } elseif(Session::get('rights') == 1) {
                 $data['layout'] = 'admin-layout';
-            } elseif (Session::get('rights') == 2) {
+            } elseif(Session::get('rights') == 2) {
                 $data['layout'] = 'power-user-layout';
-            } elseif (Session::get('rights') == 3) {
+            } elseif(Session::get('rights') == 3) {
                 $data['layout'] = 'reporting-user-layout';
             }
             $loginRecord = LoginRecord::where('machine_id', '=', $machine_id)->get();
             $data['machine'] = Machine::find($machine_id);
-            if (Session::get('rights') == 0) {
+            if(Session::get('rights') == 0) {
                 $data['user'] = Users::find($loginRecord[0]->user_id);
             } else {
                 $data['user'] = Users::find(Session::get('user_name'));
@@ -70,43 +68,42 @@ class ReportsController extends Controller
             return redirect('/');
         }
     }
-    public function reportsExport(Request $request, $id)
-    {
+    public function reportsExport(Request $request, $id) {
 
         //dd($request->all());
         $user_id = Session::get('user_id');
-        if (isset($user_id)) {
+        if(isset($user_id)) {
             $data['path'] = Route::getFacadeRoot()->current()->uri();
             $machine_id = Crypt::decrypt($id);
             $date = $request->date;
-            if (Session::get('rights') == 0) {
+            if(Session::get('rights') == 0) {
                 $data['layout'] = 'web-layout';
-            } elseif (Session::get('rights') == 1) {
+            } elseif(Session::get('rights') == 1) {
                 $data['layout'] = 'admin-layout';
-            } elseif (Session::get('rights') == 2) {
+            } elseif(Session::get('rights') == 2) {
                 $data['layout'] = 'power-user-layout';
-            } elseif (Session::get('rights') == 3) {
+            } elseif(Session::get('rights') == 3) {
                 $data['layout'] = 'reporting-user-layout';
             }
             $data['machine'] = Machine::find($machine_id);
             $data['record'] = Record::where('machine_id', '=', $machine_id)->latest('run_date_time')->first();
             $shiftSelection = json_decode(urldecode($request->shiftSelection), true);
-            if ($shiftSelection[0] == 'All-Day') {
+            if($shiftSelection[0] == 'All-Day') {
                 $from_date = $request->date;
                 $to_date = $request->to_date;
 
                 $data['from'] = $from_date;
                 $data['to'] = $to_date;
 
-                $startDateTime = date('Y-m-d H:i:s', strtotime($from_date . ' + 390 minutes'));
-                $endDateTime = date('Y-m-d H:i:s', strtotime($to_date . ' + 1830 minutes'));
+                $startDateTime = date('Y-m-d H:i:s', strtotime($from_date.' + 390 minutes'));
+                $endDateTime = date('Y-m-d H:i:s', strtotime($to_date.' + 1830 minutes'));
             } else {
 
                 $minStarted = Shift::find($shiftSelection[0])->min_started;
                 $minEnded = Shift::find($shiftSelection[count($shiftSelection) - 1])->min_ended;
 
-                $startDateTime = date('Y-m-d H:i:s', strtotime($date . ' + ' . $minStarted . ' minutes'));
-                $endDateTime = date('Y-m-d H:i:s', strtotime($date . ' + ' . $minEnded . ' minutes'));
+                $startDateTime = date('Y-m-d H:i:s', strtotime($date.' + '.$minStarted.' minutes'));
+                $endDateTime = date('Y-m-d H:i:s', strtotime($date.' + '.$minEnded.' minutes'));
             }
 
             $data['machine'] = Machine::find($machine_id);
@@ -116,7 +113,7 @@ class ReportsController extends Controller
             $runningCodes = Error::select('id')->where('category', '=', 'Running')->get();
             $jobWaitingCodes = Error::select('id')->where('category', '=', 'Job Waiting')->get();
 
-            if (date('Y-m-d H:i:s') < $endDateTime) {
+            if(date('Y-m-d H:i:s') < $endDateTime) {
                 $endDateTime = date('Y-m-d H:i:s');
             }
 
@@ -153,7 +150,7 @@ class ReportsController extends Controller
                 ->where('records.run_date_time', '<=', $endDateTime)
                 ->orderby('run_date_time', 'ASC')
                 ->get();
-            if (count($records) > 0) {
+            if(count($records) > 0) {
                 $data['records'] = [];
                 $data['negativeRecords'] = [];
                 $startDate = $records[0]->run_date_time;
@@ -168,52 +165,52 @@ class ReportsController extends Controller
 
                 $totalTimeDifference = date_diff(date_create($startDateTime), date_create($endDateTime));
                 $totalTime = (($totalTimeDifference->y * 365 + $totalTimeDifference->m * 30 + $totalTimeDifference->d) * 24 + $totalTimeDifference->h) * 60 + $totalTimeDifference->i + $totalTimeDifference->s / 60;
-                if (count($records) > 1) {
-                    for ($i = 0; $i < count($records); $i++) {
-                        if (isset($records[$i + 1])) {
-                            if ($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
+                if(count($records) > 1) {
+                    for($i = 0; $i < count($records); $i++) {
+                        if(isset($records[$i + 1])) {
+                            if($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
                                 $endDate = $records[$i]->run_date_time;
                                 $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                 $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                                if ($data['machine']->time_uom == 'Hr') {
-                                    if ($duration == 0) {
+                                if($data['machine']->time_uom == 'Hr') {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = (($records[$i]->length - $oldLength) / $duration) * 60;
                                     }
-                                } elseif ($data['machine']->time_uom == 'Min') {
-                                    if ($duration == 0) {
+                                } elseif($data['machine']->time_uom == 'Min') {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = ($records[$i]->length - $oldLength) / $duration;
                                     }
                                 } else {
-                                    if ($duration == 0) {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = (($records[$i]->length - $oldLength) / $duration) / 60;
                                     }
                                 }
-                                foreach ($runningCodes as $runningCode) {
-                                    if ($runningCode->id == $records[$i]->error_id) {
+                                foreach($runningCodes as $runningCode) {
+                                    if($runningCode->id == $records[$i]->error_id) {
                                         $runTime += $duration;
                                         $jobRunTime += $duration;
                                         $production += $records[$i]->length - $oldLength;
                                         $jobProduction += $records[$i]->length - $oldLength;
                                     }
                                 }
-                                foreach ($idleErrors as $idleError) {
-                                    if ($idleError->id == $records[$i]->error_id) {
+                                foreach($idleErrors as $idleError) {
+                                    if($idleError->id == $records[$i]->error_id) {
                                         $idleTime += $duration;
                                     }
                                 }
-                                foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                    if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                foreach($jobWaitingCodes as $jobWaitingCode) {
+                                    if($jobWaitingCode->id == $records[$i]->error_id) {
                                         $jobWaitTime += $duration;
                                     }
                                 }
-                                if ($duration <= $loginRecord[0]->machine->auto_downtime && $records[$i]->error_id == 500) {
-                                    if ($records[$i]->length - $oldLength < 0) {
+                                if($duration <= $loginRecord[0]->machine->auto_downtime && $records[$i]->error_id == 500) {
+                                    if($records[$i]->length - $oldLength < 0) {
                                         array_push($data['negativeRecords'], [
                                             "startDate" => $startDate,
                                             "endDate" => $endDate,
@@ -243,15 +240,15 @@ class ReportsController extends Controller
                                         "process_name" => $records[$i]->process_name,
                                     ]);
                                     $startDate = $endDate;
-                                    if ($records[$i]->job_id != $records[$i + 1]->job_id) {
+                                    if($records[$i]->job_id != $records[$i + 1]->job_id) {
                                         $oldLength = $records[$i + 1]->length;
                                         $jobProduction = $production;
-                                        if ($jobRunTime == 0) {
+                                        if($jobRunTime == 0) {
                                             $jobPerformance = 0;
                                         } else {
                                             $jobPerformance = (($jobProduction / $jobRunTime) / $data['machine']->max_speed) * 100;
                                         }
-                                        foreach ($data['records'] as $record) {
+                                        foreach($data['records'] as $record) {
                                             array_push($record, [
                                                 "jobProduction" => $jobProduction,
                                                 "jobPerformance" => $jobPerformance,
@@ -264,7 +261,7 @@ class ReportsController extends Controller
                                         $oldLength = $records[$i]->length;
                                     }
                                 } else {
-                                    if ($records[$i]->length - $oldLength < 0) {
+                                    if($records[$i]->length - $oldLength < 0) {
                                         array_push($data['negativeRecords'], [
                                             "startDate" => $startDate,
                                             "endDate" => $endDate,
@@ -294,24 +291,24 @@ class ReportsController extends Controller
                                         "process_name" => $records[$i]->process_name,
                                     ]);
                                     $startDate = $endDate;
-                                    if ($records[$i]->job_id != $records[$i + 1]->job_id) {
+                                    if($records[$i]->job_id != $records[$i + 1]->job_id) {
                                         $oldLength = $records[$i + 1]->length;
-                                        if ($jobRunTime == 0) {
+                                        if($jobRunTime == 0) {
                                             $jobPerformance = 0;
                                             $jobAverageSpeed = 0;
                                         } else {
-                                            if ($data['machine']->time_uom == 'Min') {
+                                            if($data['machine']->time_uom == 'Min') {
                                                 $jobPerformance = (($jobProduction / $jobRunTime) / $data['machine']->max_speed) * 100;
                                                 $jobAverageSpeed = $jobProduction / $jobRunTime;
-                                            } elseif ($data['machine']->time_uom == 'Hr') {
+                                            } elseif($data['machine']->time_uom == 'Hr') {
                                                 $jobPerformance = (($jobProduction / $jobRunTime) * 60 / $data['machine']->max_speed) * 100;
                                                 $jobAverageSpeed = ($jobProduction / $jobRunTime) * 60;
-                                            } elseif ($data['machine']->time_uom == 'Sec') {
+                                            } elseif($data['machine']->time_uom == 'Sec') {
                                                 $jobPerformance = ((($jobProduction / $jobRunTime) / 60) / $data['machine']->max_speed) * 100;
                                                 $jobAverageSpeed = (($jobProduction / $jobRunTime) / 60);
                                             }
                                         }
-                                        for ($j = 0; $j < count($data['records']); $j++) {
+                                        for($j = 0; $j < count($data['records']); $j++) {
                                             array_push($data['records'][$j], [
                                                 "jobProduction" => $jobProduction,
                                                 "jobPerformance" => $jobPerformance,
@@ -330,44 +327,44 @@ class ReportsController extends Controller
                             $endDate = $records[$i]->run_date_time;
                             $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                             $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                            if ($data['machine']->time_uom == 'Hr') {
-                                if ($duration == 0) {
+                            if($data['machine']->time_uom == 'Hr') {
+                                if($duration == 0) {
                                     $instantSpeed = 0;
                                 } else {
                                     $instantSpeed = (($records[$i]->length - $oldLength) / $duration) * 60;
                                 }
-                            } elseif ($data['machine']->time_uom == 'Min') {
-                                if ($duration == 0) {
+                            } elseif($data['machine']->time_uom == 'Min') {
+                                if($duration == 0) {
                                     $instantSpeed = 0;
                                 } else {
                                     $instantSpeed = ($records[$i]->length - $oldLength) / $duration;
                                 }
                             } else {
-                                if ($duration == 0) {
+                                if($duration == 0) {
                                     $instantSpeed = 0;
                                 } else {
                                     $instantSpeed = (($records[$i]->length - $oldLength) / $duration) / 60;
                                 }
                             }
-                            foreach ($runningCodes as $runningCode) {
-                                if ($runningCode->id == $records[$i]->error_id) {
+                            foreach($runningCodes as $runningCode) {
+                                if($runningCode->id == $records[$i]->error_id) {
                                     $runTime += $duration;
                                     $production += $records[$i]->length - $oldLength;
                                     $jobProduction += $records[$i]->length - $oldLength;
                                 }
                             }
-                            foreach ($idleErrors as $idleError) {
-                                if ($idleError->id == $records[$i]->error_id) {
+                            foreach($idleErrors as $idleError) {
+                                if($idleError->id == $records[$i]->error_id) {
                                     $idleTime += $duration;
                                 }
                             }
-                            foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                if ($jobWaitingCode->id == $records[$i]->error_id) {
+                            foreach($jobWaitingCodes as $jobWaitingCode) {
+                                if($jobWaitingCode->id == $records[$i]->error_id) {
                                     $jobWaitTime += $duration;
                                 }
                             }
-                            if ($duration <= $loginRecord[0]->machine->auto_downtime && $records[$i]->error_id == 500) {
-                                if ($records[$i]->length - $oldLength < 0) {
+                            if($duration <= $loginRecord[0]->machine->auto_downtime && $records[$i]->error_id == 500) {
+                                if($records[$i]->length - $oldLength < 0) {
                                     array_push($data['negativeRecords'], [
                                         "startDate" => $startDate,
                                         "endDate" => $endDate,
@@ -400,7 +397,7 @@ class ReportsController extends Controller
                                 $startDate = $endDate;
                                 $oldLength = $records[$i]->length;
                             } else {
-                                if ($records[$i]->length - $oldLength < 0) {
+                                if($records[$i]->length - $oldLength < 0) {
                                     array_push($data['negativeRecords'], [
                                         "startDate" => $startDate,
                                         "endDate" => $endDate,
@@ -435,23 +432,23 @@ class ReportsController extends Controller
                             }
                         }
                     }
-                    for ($k = 0; $k < count($data['records']); $k++) {
-                        if ($jobRunTime == 0) {
+                    for($k = 0; $k < count($data['records']); $k++) {
+                        if($jobRunTime == 0) {
                             $jobPerformance = 0;
                             $jobAverageSpeed = 0;
                         } else {
-                            if ($data['machine']->time_uom == 'Min') {
+                            if($data['machine']->time_uom == 'Min') {
                                 $jobPerformance = (($jobProduction / $jobRunTime) / $data['machine']->max_speed) * 100;
                                 $jobAverageSpeed = $jobProduction / $jobRunTime;
-                            } elseif ($data['machine']->time_uom == 'Hr') {
+                            } elseif($data['machine']->time_uom == 'Hr') {
                                 $jobPerformance = (($jobProduction / $jobRunTime) * 60 / $data['machine']->max_speed) * 100;
                                 $jobAverageSpeed = ($jobProduction / $jobRunTime) * 60;
-                            } elseif ($data['machine']->time_uom == 'Sec') {
+                            } elseif($data['machine']->time_uom == 'Sec') {
                                 $jobPerformance = ((($jobProduction / $jobRunTime) / 60) / $data['machine']->max_speed) * 100;
                                 $jobAverageSpeed = (($jobProduction / $jobRunTime) / 60);
                             }
                         }
-                        if (!isset($data['records'][$k][0]['jobProduction']) || !isset($data['records'][$k][0]['jobPerformance'])) {
+                        if(!isset($data['records'][$k][0]['jobProduction']) || !isset($data['records'][$k][0]['jobPerformance'])) {
                             array_push($data['records'][$k], [
                                 "jobProduction" => $jobProduction,
                                 "jobPerformance" => $jobPerformance,
@@ -460,10 +457,10 @@ class ReportsController extends Controller
                             ]);
                         }
                     }
-                    if ($runTime > 0) {
-                        if ($data['machine']->time_uom == 'Hr') {
+                    if($runTime > 0) {
+                        if($data['machine']->time_uom == 'Hr') {
                             $actualSpeed = $production / $runTime * 60;
-                        } elseif ($data['machine']->time_uom == 'Min') {
+                        } elseif($data['machine']->time_uom == 'Min') {
                             $actualSpeed = $production / $runTime;
                         } else {
                             $actualSpeed = $production / $runTime / 60;
@@ -474,7 +471,7 @@ class ReportsController extends Controller
                 }
                 //echo '<pre>';
                 //print_r($data['records']);
-                if (Session::get('rights') == 0) {
+                if(Session::get('rights') == 0) {
                     $data['user'] = Users::find($loginRecord[0]->user_id);
                 } else {
                     $data['user'] = Users::find(Session::get('user_name'));
@@ -491,7 +488,7 @@ class ReportsController extends Controller
                 $data['shift'] = $request->input('shiftSelection');
                 $data['date'] = $date;
 
-                if (count($data['negativeRecords']) > 0) {
+                if(count($data['negativeRecords']) > 0) {
 
                     // Mail::send('emails.negative-meters', $data, function ($message) use ($data) {
                     //     $message->from('systems.services@packages.com.pk', 'RotoEye Cloud');
@@ -518,37 +515,36 @@ class ReportsController extends Controller
             }
         }
     }
-    public function productionReports(Request $request, $id)
-    {
+    public function productionReports(Request $request, $id) {
 
         $shiftSelection = $request->input('shiftSelection');
         $data["shft"] = $shiftSelection;
         $user_id = Session::get('user_id');
-        if (isset($user_id)) {
+        if(isset($user_id)) {
             $data['path'] = Route::getFacadeRoot()->current()->uri();
             $machine_id = Crypt::decrypt($id);
             $date = $request->input('date');
-            if (Session::get('rights') == 0) {
+            if(Session::get('rights') == 0) {
                 $data['layout'] = 'web-layout';
-            } elseif (Session::get('rights') == 1) {
+            } elseif(Session::get('rights') == 1) {
                 $data['layout'] = 'admin-layout';
-            } elseif (Session::get('rights') == 2) {
+            } elseif(Session::get('rights') == 2) {
                 $data['layout'] = 'power-user-layout';
-            } elseif (Session::get('rights') == 3) {
+            } elseif(Session::get('rights') == 3) {
                 $data['layout'] = 'reporting-user-layout';
             }
             $data['machine'] = Machine::find($machine_id);
             $data['record'] = Record::where('machine_id', '=', $machine_id)->latest('run_date_time')->first();
 
             //Shift Production Report (Shift Wise and Duration Wise)
-            if ($request->input('reportType') == 'shift-production-report') {
+            if($request->input('reportType') == 'shift-production-report') {
                 $shiftSelection = $request->input('shiftSelection');
                 $data['shiftSelection'] = $shiftSelection;
-                if ($shiftSelection[0] == 'All-Day') {
+                if($shiftSelection[0] == 'All-Day') {
                     //haseeb 6/3/2021
                     $machine = Machine::find($machine_id);
                     $shifts_id = [];
-                    foreach ($machine->section->department->businessUnit->company->shifts as $shift) {
+                    foreach($machine->section->department->businessUnit->company->shifts as $shift) {
                         array_push($shifts_id, $shift->id);
                     }
 
@@ -563,8 +559,8 @@ class ReportsController extends Controller
                     $data['to'] = $to_date;
 
                     //haseeb 6/3/2021
-                    $startDateTime = date('Y-m-d H:i:s', strtotime($data['from'] . ' + ' . $minStarted . ' minutes'));
-                    $endDateTime = date('Y-m-d H:i:s', strtotime($data['to'] . ' + ' . $minEnded . ' minutes'));
+                    $startDateTime = date('Y-m-d H:i:s', strtotime($data['from'].' + '.$minStarted.' minutes'));
+                    $endDateTime = date('Y-m-d H:i:s', strtotime($data['to'].' + '.$minEnded.' minutes'));
 
                     //$startDateTime = date('Y-m-d H:i:s', strtotime($from_date.' + 390 minutes'));
                     //$endDateTime = date('Y-m-d H:i:s', strtotime($to_date.' + 1830 minutes'));
@@ -574,8 +570,8 @@ class ReportsController extends Controller
                     $minStarted = Shift::find($shiftSelection[0])->min_started;
                     $minEnded = Shift::find($shiftSelection[count($shiftSelection) - 1])->min_ended;
 
-                    $startDateTime = date('Y-m-d H:i:s', strtotime($date . ' + ' . $minStarted . ' minutes'));
-                    $endDateTime = date('Y-m-d H:i:s', strtotime($date . ' + ' . $minEnded . ' minutes'));
+                    $startDateTime = date('Y-m-d H:i:s', strtotime($date.' + '.$minStarted.' minutes'));
+                    $endDateTime = date('Y-m-d H:i:s', strtotime($date.' + '.$minEnded.' minutes'));
                 }
 
                 $data['machine'] = Machine::find($machine_id);
@@ -585,7 +581,7 @@ class ReportsController extends Controller
                 $runningCodes = Error::select('id')->where('category', '=', 'Running')->get();
                 $jobWaitingCodes = Error::select('id')->where('category', '=', 'Job Waiting')->get();
 
-                if (date('Y-m-d H:i:s') < $endDateTime) {
+                if(date('Y-m-d H:i:s') < $endDateTime) {
                     $endDateTime = date('Y-m-d H:i:s');
                 }
 
@@ -623,7 +619,7 @@ class ReportsController extends Controller
                     ->where('records.run_date_time', '<=', $endDateTime)
                     ->orderby('run_date_time', 'ASC')
                     ->get();
-                if (count($records) > 0) {
+                if(count($records) > 0) {
                     $data['records'] = [];
                     $data['negativeRecords'] = [];
                     $startDate = $records[0]->run_date_time;
@@ -637,54 +633,54 @@ class ReportsController extends Controller
                     $jobRunTime = 0;
 
                     $totalTime = (strtotime($endDateTime) - strtotime($startDateTime)) / 60;
-                    if (count($records) > 1) {
-                        for ($i = 0; $i < count($records); $i++) {
-                            if (isset($records[$i + 1])) {
-                                if ($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
+                    if(count($records) > 1) {
+                        for($i = 0; $i < count($records); $i++) {
+                            if(isset($records[$i + 1])) {
+                                if($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
                                     $endDate = $records[$i]->run_date_time;
                                     $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                     $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                                    if ($data['machine']->time_uom == 'Hr') {
-                                        if ($duration == 0) {
+                                    if($data['machine']->time_uom == 'Hr') {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = (($records[$i]->length - $oldLength) / $duration) * 60;
                                         }
-                                    } elseif ($data['machine']->time_uom == 'Min') {
-                                        if ($duration == 0) {
+                                    } elseif($data['machine']->time_uom == 'Min') {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = ($records[$i]->length - $oldLength) / $duration;
                                         }
                                     } else {
-                                        if ($duration == 0) {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = (($records[$i]->length - $oldLength) / $duration) / 60;
                                         }
                                     }
-                                    foreach ($runningCodes as $runningCode) {
-                                        if ($runningCode->id == $records[$i]->error_id) {
+                                    foreach($runningCodes as $runningCode) {
+                                        if($runningCode->id == $records[$i]->error_id) {
                                             $runTime += $duration;
                                             $jobRunTime += $duration;
                                             $production += $records[$i]->length - $oldLength;
                                             $jobProduction += $records[$i]->length - $oldLength;
                                         }
                                     }
-                                    foreach ($idleErrors as $idleError) {
-                                        if ($idleError->id == $records[$i]->error_id) {
+                                    foreach($idleErrors as $idleError) {
+                                        if($idleError->id == $records[$i]->error_id) {
                                             $idleTime += $duration;
                                         }
                                     }
-                                    foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                        if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                    foreach($jobWaitingCodes as $jobWaitingCode) {
+                                        if($jobWaitingCode->id == $records[$i]->error_id) {
                                             $jobWaitTime += $duration;
                                         }
                                     }
 
 
-                                    if ($duration <= $loginRecord[0]->machine->auto_downtime && $records[$i]->error_id == 500 && false) {
-                                        if ($records[$i]->length - $oldLength < 0) {
+                                    if($duration <= $loginRecord[0]->machine->auto_downtime && $records[$i]->error_id == 500 && false) {
+                                        if($records[$i]->length - $oldLength < 0) {
                                             array_push($data['negativeRecords'], [
                                                 "startDate" => $startDate,
                                                 "endDate" => $endDate,
@@ -717,15 +713,15 @@ class ReportsController extends Controller
                                             "process_name" => $records[$i]->process_name,
                                         ]);
                                         $startDate = $endDate;
-                                        if ($records[$i]->job_id != $records[$i + 1]->job_id) {
+                                        if($records[$i]->job_id != $records[$i + 1]->job_id) {
                                             $oldLength = $records[$i + 1]->length;
                                             $jobProduction = $production;
-                                            if ($jobRunTime == 0) {
+                                            if($jobRunTime == 0) {
                                                 $jobPerformance = 0;
                                             } else {
                                                 $jobPerformance = (($jobProduction / $jobRunTime) / $data['machine']->max_speed) * 100;
                                             }
-                                            foreach ($data['records'] as $record) {
+                                            foreach($data['records'] as $record) {
                                                 array_push($record, [
                                                     "jobProduction" => $jobProduction,
                                                     "jobPerformance" => $jobPerformance,
@@ -738,7 +734,7 @@ class ReportsController extends Controller
                                             $oldLength = $records[$i]->length;
                                         }
                                     } else {
-                                        if ($records[$i]->length - $oldLength < 0) {
+                                        if($records[$i]->length - $oldLength < 0) {
 
                                             array_push($data['negativeRecords'], [
                                                 "startDate" => $startDate,
@@ -772,24 +768,24 @@ class ReportsController extends Controller
                                             "process_name" => $records[$i]->process_name,
                                         ]);
                                         $startDate = $endDate;
-                                        if ($records[$i]->job_id != $records[$i + 1]->job_id) {
+                                        if($records[$i]->job_id != $records[$i + 1]->job_id) {
                                             $oldLength = $records[$i + 1]->length;
-                                            if ($jobRunTime == 0) {
+                                            if($jobRunTime == 0) {
                                                 $jobPerformance = 0;
                                                 $jobAverageSpeed = 0;
                                             } else {
-                                                if ($data['machine']->time_uom == 'Min') {
+                                                if($data['machine']->time_uom == 'Min') {
                                                     $jobPerformance = (($jobProduction / $jobRunTime) / $data['machine']->max_speed) * 100;
                                                     $jobAverageSpeed = $jobProduction / $jobRunTime;
-                                                } elseif ($data['machine']->time_uom == 'Hr') {
+                                                } elseif($data['machine']->time_uom == 'Hr') {
                                                     $jobPerformance = (($jobProduction / $jobRunTime) * 60 / $data['machine']->max_speed) * 100;
                                                     $jobAverageSpeed = ($jobProduction / $jobRunTime) * 60;
-                                                } elseif ($data['machine']->time_uom == 'Sec') {
+                                                } elseif($data['machine']->time_uom == 'Sec') {
                                                     $jobPerformance = ((($jobProduction / $jobRunTime) / 60) / $data['machine']->max_speed) * 100;
                                                     $jobAverageSpeed = (($jobProduction / $jobRunTime) / 60);
                                                 }
                                             }
-                                            for ($j = 0; $j < count($data['records']); $j++) {
+                                            for($j = 0; $j < count($data['records']); $j++) {
                                                 array_push($data['records'][$j], [
                                                     "jobProduction" => $jobProduction,
                                                     "jobPerformance" => $jobPerformance,
@@ -808,44 +804,44 @@ class ReportsController extends Controller
                                 $endDate = $records[$i]->run_date_time;
                                 $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                 $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                                if ($data['machine']->time_uom == 'Hr') {
-                                    if ($duration == 0) {
+                                if($data['machine']->time_uom == 'Hr') {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = (($records[$i]->length - $oldLength) / $duration) * 60;
                                     }
-                                } elseif ($data['machine']->time_uom == 'Min') {
-                                    if ($duration == 0) {
+                                } elseif($data['machine']->time_uom == 'Min') {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = ($records[$i]->length - $oldLength) / $duration;
                                     }
                                 } else {
-                                    if ($duration == 0) {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = (($records[$i]->length - $oldLength) / $duration) / 60;
                                     }
                                 }
-                                foreach ($runningCodes as $runningCode) {
-                                    if ($runningCode->id == $records[$i]->error_id) {
+                                foreach($runningCodes as $runningCode) {
+                                    if($runningCode->id == $records[$i]->error_id) {
                                         $runTime += $duration;
                                         $production += $records[$i]->length - $oldLength;
                                         $jobProduction += $records[$i]->length - $oldLength;
                                     }
                                 }
-                                foreach ($idleErrors as $idleError) {
-                                    if ($idleError->id == $records[$i]->error_id) {
+                                foreach($idleErrors as $idleError) {
+                                    if($idleError->id == $records[$i]->error_id) {
                                         $idleTime += $duration;
                                     }
                                 }
-                                foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                    if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                foreach($jobWaitingCodes as $jobWaitingCode) {
+                                    if($jobWaitingCode->id == $records[$i]->error_id) {
                                         $jobWaitTime += $duration;
                                     }
                                 }
-                                if ($duration <= $loginRecord[0]->machine->auto_downtime && $records[$i]->error_id == 500 && false) {
-                                    if ($records[$i]->length - $oldLength < 0) {
+                                if($duration <= $loginRecord[0]->machine->auto_downtime && $records[$i]->error_id == 500 && false) {
+                                    if($records[$i]->length - $oldLength < 0) {
 
                                         array_push($data['negativeRecords'], [
                                             "startDate" => $startDate,
@@ -880,7 +876,7 @@ class ReportsController extends Controller
                                     $startDate = $endDate;
                                     $oldLength = $records[$i]->length;
                                 } else {
-                                    if ($records[$i]->length - $oldLength < 0) {
+                                    if($records[$i]->length - $oldLength < 0) {
 
                                         array_push($data['negativeRecords'], [
                                             "startDate" => $startDate,
@@ -916,8 +912,8 @@ class ReportsController extends Controller
                                     $oldLength = $records[$i]->length;
                                 }
 
-                                if ($request->input('shiftSelection')[0] != 'All-Day') {
-                                    if (count($request->input('shiftSelection')) == 1) {
+                                if($request->input('shiftSelection')[0] != 'All-Day') {
+                                    if(count($request->input('shiftSelection')) == 1) {
                                         Productivity::updateOrInsert(
                                             [
                                                 'machine_id' => $data['machine']->id,
@@ -935,23 +931,23 @@ class ReportsController extends Controller
                                 }
                             }
                         }
-                        for ($k = 0; $k < count($data['records']); $k++) {
-                            if ($jobRunTime == 0) {
+                        for($k = 0; $k < count($data['records']); $k++) {
+                            if($jobRunTime == 0) {
                                 $jobPerformance = 0;
                                 $jobAverageSpeed = 0;
                             } else {
-                                if ($data['machine']->time_uom == 'Min') {
+                                if($data['machine']->time_uom == 'Min') {
                                     $jobPerformance = (($jobProduction / $jobRunTime) / $data['machine']->max_speed) * 100;
                                     $jobAverageSpeed = $jobProduction / $jobRunTime;
-                                } elseif ($data['machine']->time_uom == 'Hr') {
+                                } elseif($data['machine']->time_uom == 'Hr') {
                                     $jobPerformance = (($jobProduction / $jobRunTime) * 60 / $data['machine']->max_speed) * 100;
                                     $jobAverageSpeed = ($jobProduction / $jobRunTime) * 60;
-                                } elseif ($data['machine']->time_uom == 'Sec') {
+                                } elseif($data['machine']->time_uom == 'Sec') {
                                     $jobPerformance = ((($jobProduction / $jobRunTime) / 60) / $data['machine']->max_speed) * 100;
                                     $jobAverageSpeed = (($jobProduction / $jobRunTime) / 60);
                                 }
                             }
-                            if (!isset($data['records'][$k][0]['jobProduction']) || !isset($data['records'][$k][0]['jobPerformance'])) {
+                            if(!isset($data['records'][$k][0]['jobProduction']) || !isset($data['records'][$k][0]['jobPerformance'])) {
                                 array_push($data['records'][$k], [
                                     "jobProduction" => $jobProduction,
                                     "jobPerformance" => $jobPerformance,
@@ -960,10 +956,10 @@ class ReportsController extends Controller
                                 ]);
                             }
                         }
-                        if ($runTime > 0) {
-                            if ($data['machine']->time_uom == 'Hr') {
+                        if($runTime > 0) {
+                            if($data['machine']->time_uom == 'Hr') {
                                 $actualSpeed = $production / $runTime * 60;
-                            } elseif ($data['machine']->time_uom == 'Min') {
+                            } elseif($data['machine']->time_uom == 'Min') {
                                 $actualSpeed = $production / $runTime;
                             } else {
                                 $actualSpeed = $production / $runTime / 60;
@@ -972,7 +968,7 @@ class ReportsController extends Controller
                             $actualSpeed = 0;
                         }
                     }
-                    if (Session::get('rights') == 0) {
+                    if(Session::get('rights') == 0) {
                         $data['user'] = Users::find($loginRecord[0]->user_id);
                     } else {
                         $data['user'] = Users::find(Session::get('user_name'));
@@ -1007,10 +1003,10 @@ class ReportsController extends Controller
                     })->where('machine_id', '=', $data['machine']->id)->get();
 
 
-                    if (isset($existingRecords)) {
-                        if (count($existingRecords) > 0) {
+                    if(isset($existingRecords)) {
+                        if(count($existingRecords) > 0) {
                             //if(count($existingRecords) < count($data['records'])){
-                            foreach ($existingRecords as $r) {
+                            foreach($existingRecords as $r) {
                                 $r->delete();
                             }
                             // }
@@ -1019,7 +1015,7 @@ class ReportsController extends Controller
 
                     // if(count($existingRecords) < count($data['records'])){
 
-                    foreach ($data['records'] as $record) {
+                    foreach($data['records'] as $record) {
 
                         $reportdata = new ProductionReport();
                         $reportdata->job_no = $record['job_id'];
@@ -1039,7 +1035,7 @@ class ReportsController extends Controller
 
                     //dd($data['negativeRecords']);
 
-                    if (count($data['negativeRecords']) > 0) {
+                    if(count($data['negativeRecords']) > 0) {
 
                         Mail::send('emails.negative-meters', $data, function ($message) use ($data) {
                             $message->from('systems.services@packages.com.pk', 'RotoEye Cloud');
@@ -1065,13 +1061,13 @@ class ReportsController extends Controller
                 }
 
 
-            } elseif ($request->input('reportType') == 'shift-production-report-job') {
+            } elseif($request->input('reportType') == 'shift-production-report-job') {
 
                 $shiftSelection = $request->input('shiftSelection');
                 $machine = Machine::find($machine_id);
-                if ($shiftSelection[0] == 'All-Day') {
+                if($shiftSelection[0] == 'All-Day') {
                     $shifts_id = [];
-                    foreach ($machine->section->department->businessUnit->company->shifts as $shift) {
+                    foreach($machine->section->department->businessUnit->company->shifts as $shift) {
                         array_push($shifts_id, $shift->id);
                     }
                     $minStarted = Shift::find($shifts_id[0])->min_started;
@@ -1080,14 +1076,14 @@ class ReportsController extends Controller
                     $to_date = $request->input('to_date');
                     $data['from'] = $from_date;
                     $data['to'] = $to_date;
-                    $startDateTime = date('Y-m-d H:i:s', strtotime($data['from'] . ' + ' . $minStarted . ' minutes'));
-                    $endDateTime = date('Y-m-d H:i:s', strtotime($data['to'] . ' + ' . $minEnded . ' minutes'));
+                    $startDateTime = date('Y-m-d H:i:s', strtotime($data['from'].' + '.$minStarted.' minutes'));
+                    $endDateTime = date('Y-m-d H:i:s', strtotime($data['to'].' + '.$minEnded.' minutes'));
 
                 } else {
                     $minStarted = Shift::find($shiftSelection[0])->min_started;
                     $minEnded = Shift::find($shiftSelection[count($shiftSelection) - 1])->min_ended;
-                    $startDateTime = date('Y-m-d H:i:s', strtotime($date . ' + ' . $minStarted . ' minutes'));
-                    $endDateTime = date('Y-m-d H:i:s', strtotime($date . ' + ' . $minEnded . ' minutes'));
+                    $startDateTime = date('Y-m-d H:i:s', strtotime($date.' + '.$minStarted.' minutes'));
+                    $endDateTime = date('Y-m-d H:i:s', strtotime($date.' + '.$minEnded.' minutes'));
                 }
 
                 $data['machine'] = Machine::find($machine_id);
@@ -1096,7 +1092,7 @@ class ReportsController extends Controller
                 $runningCodes = Error::select('id')->where('category', '=', 'Running')->get();
                 $jobWaitingCodes = Error::select('id')->where('category', '=', 'Job Waiting')->get();
 
-                if (date('Y-m-d H:i:s') < $endDateTime) {
+                if(date('Y-m-d H:i:s') < $endDateTime) {
                     $endDateTime = date('Y-m-d H:i:s');
                 }
 
@@ -1160,7 +1156,7 @@ class ReportsController extends Controller
 
                 //return $records;
 
-                if (count($records) > 0) {
+                if(count($records) > 0) {
                     $data['records'] = [];
                     $data['negativeRecords'] = [];
                     $startDate = $records[0]->run_date_time;
@@ -1183,61 +1179,61 @@ class ReportsController extends Controller
                     $job_GSM = 0;
 
                     $totalTime = (strtotime($endDateTime) - strtotime($startDateTime)) / 60;
-                    if (count($records) > 1) {
-                        for ($i = 0; $i < count($records); $i++) {
+                    if(count($records) > 1) {
+                        for($i = 0; $i < count($records); $i++) {
 
                             $running_speed = isset($records[$i]->sleeve_speed) ? $records[$i]->sleeve_speed : $data['machine']->max_speed;
-                            if (isset($records[$i + 1])) {
-                                if ($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
+                            if(isset($records[$i + 1])) {
+                                if($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
                                     $endDate = $records[$i]->run_date_time;
                                     $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                     $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                                    if ($data['machine']->time_uom == 'Hr') {
-                                        if ($duration == 0) {
+                                    if($data['machine']->time_uom == 'Hr') {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = (($records[$i]->length - $oldLength) / $duration) * 60;
                                         }
-                                    } elseif ($data['machine']->time_uom == 'Min') {
-                                        if ($duration == 0) {
+                                    } elseif($data['machine']->time_uom == 'Min') {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = ($records[$i]->length - $oldLength) / $duration;
                                         }
                                     } else {
-                                        if ($duration == 0) {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = (($records[$i]->length - $oldLength) / $duration) / 60;
                                         }
                                     }
-                                    foreach ($runningCodes as $runningCode) {
-                                        if ($runningCode->id == $records[$i]->error_id) {
+                                    foreach($runningCodes as $runningCode) {
+                                        if($runningCode->id == $records[$i]->error_id) {
                                             $runTime += $duration;
                                             $jobRunTime += $duration;
                                             $production += $records[$i]->length - $oldLength;
-                                            if ($data['machine']->time_uom == 'Min') {
+                                            if($data['machine']->time_uom == 'Min') {
                                                 $targetHour += ($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0;
                                                 $jobTargetHour += ($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0;
-                                            } elseif ($data['machine']->time_uom == 'Hr') {
+                                            } elseif($data['machine']->time_uom == 'Hr') {
                                                 $targetHour += (($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0) * 60;
                                                 $jobTargetHour += (($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0) * 60;
 
-                                            } elseif ($data['machine']->time_uom == 'Sec') {
+                                            } elseif($data['machine']->time_uom == 'Sec') {
                                                 $targetHour += ((($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0) / 60);
                                                 $jobTargetHour += ((($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0) / 60);
                                             }
-                                            if (isset($records[$i]->job_trimwidth) && isset($records[$i]->job_reelwidth) && isset($records[$i]->job_ups) && isset($machine->machine_width)) {
+                                            if(isset($records[$i]->job_trimwidth) && isset($records[$i]->job_reelwidth) && isset($records[$i]->job_ups) && isset($machine->machine_width)) {
                                                 $rotoeyeNextProduction += $records[$i]->length - $oldLength;
                                                 $productionArea += ($records[$i]->job_trimwidth + ($records[$i]->job_reelwidth * $records[$i]->job_ups)) * ($records[$i]->length - $oldLength);
                                                 $jobProductionArea += ($records[$i]->job_trimwidth + ($records[$i]->job_reelwidth * $records[$i]->job_ups)) * ($records[$i]->length - $oldLength);
-                                                if (isset($records[$i]->job_gsm)) {
+                                                if(isset($records[$i]->job_gsm)) {
                                                     $gsm += $records[$i]->job_gsm * ($records[$i]->job_trimwidth + ($records[$i]->job_reelwidth * $records[$i]->job_ups)) * ($records[$i]->length - $oldLength);
                                                     $jobGsm += $records[$i]->job_gsm * ($records[$i]->job_trimwidth + ($records[$i]->job_reelwidth * $records[$i]->job_ups)) * ($records[$i]->length - $oldLength);
                                                 }
 
                                             }
-                                            if (isset($records[$i]->col) && isset($records[$i]->job_ups) && ($records[$i]->job_ups > 0) && ($records[$i]->col > 0)) {
+                                            if(isset($records[$i]->col) && isset($records[$i]->job_ups) && ($records[$i]->job_ups > 0) && ($records[$i]->col > 0)) {
                                                 $ea += ($records[$i]->length - $oldLength) / $records[$i]->col * $records[$i]->job_ups;
                                                 $jobEa += ($records[$i]->length - $oldLength) / $records[$i]->col * $records[$i]->job_ups;
                                             }
@@ -1245,18 +1241,18 @@ class ReportsController extends Controller
                                             $jobProduction += $records[$i]->length - $oldLength;
                                         }
                                     }
-                                    foreach ($idleErrors as $idleError) {
-                                        if ($idleError->id == $records[$i]->error_id) {
+                                    foreach($idleErrors as $idleError) {
+                                        if($idleError->id == $records[$i]->error_id) {
                                             $idleTime += $duration;
                                         }
                                     }
-                                    foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                        if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                    foreach($jobWaitingCodes as $jobWaitingCode) {
+                                        if($jobWaitingCode->id == $records[$i]->error_id) {
                                             $jobWaitTime += $duration;
                                         }
                                     }
 
-                                    if ($records[$i]->length - $oldLength < 0) {
+                                    if($records[$i]->length - $oldLength < 0) {
                                         array_push($data['negativeRecords'], [
                                             "startDate" => $startDate,
                                             "endDate" => $endDate,
@@ -1316,28 +1312,28 @@ class ReportsController extends Controller
                                     ]);
 
                                     $startDate = $endDate;
-                                    if ($records[$i]->job_id != $records[$i + 1]->job_id) {
+                                    if($records[$i]->job_id != $records[$i + 1]->job_id) {
                                         $oldLength = $records[$i + 1]->length;
-                                        if ($jobRunTime == 0) {
+                                        if($jobRunTime == 0) {
                                             $jobPerformance = 0;
                                             $jobAverageSpeed = 0;
                                         } else {
 
-                                            if ($data['machine']->time_uom == 'Min') {
+                                            if($data['machine']->time_uom == 'Min') {
                                                 $jobPerformance = (($jobProduction / $jobRunTime) / $running_speed) * 100;
                                                 $jobAverageSpeed = $jobProduction / $jobRunTime;
-                                            } elseif ($data['machine']->time_uom == 'Hr') {
+                                            } elseif($data['machine']->time_uom == 'Hr') {
                                                 $jobPerformance = (($jobProduction / $jobRunTime) * 60 / $running_speed) * 100;
                                                 $jobAverageSpeed = ($jobProduction / $jobRunTime) * 60;
-                                            } elseif ($data['machine']->time_uom == 'Sec') {
+                                            } elseif($data['machine']->time_uom == 'Sec') {
                                                 $jobPerformance = ((($jobProduction / $jobRunTime) / 60) / $running_speed) * 100;
                                                 $jobAverageSpeed = (($jobProduction / $jobRunTime) / 60);
                                             }
                                         }
 
-                                        for ($j = 0; $j < count($data['records']); $j++) {
+                                        for($j = 0; $j < count($data['records']); $j++) {
                                             $jobUtilization = 0;
-                                            if (isset($records[$i]->job_trimwidth) && isset($records[$i]->job_reelwidth) && isset($records[$i]->job_ups) && isset($machine->machine_width) && $jobProduction > 0) {
+                                            if(isset($records[$i]->job_trimwidth) && isset($records[$i]->job_reelwidth) && isset($records[$i]->job_ups) && isset($machine->machine_width) && $jobProduction > 0) {
                                                 $jobUtilization = $jobProductionArea / ($jobProduction * $machine->machine_width) * 100;
                                             }
                                             array_push($data['records'][$j], [
@@ -1369,54 +1365,54 @@ class ReportsController extends Controller
                                 $endDate = $records[$i]->run_date_time;
                                 $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                 $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                                if ($data['machine']->time_uom == 'Hr') {
-                                    if ($duration == 0) {
+                                if($data['machine']->time_uom == 'Hr') {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = (($records[$i]->length - $oldLength) / $duration) * 60;
                                     }
-                                } elseif ($data['machine']->time_uom == 'Min') {
-                                    if ($duration == 0) {
+                                } elseif($data['machine']->time_uom == 'Min') {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = ($records[$i]->length - $oldLength) / $duration;
                                     }
                                 } else {
-                                    if ($duration == 0) {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = (($records[$i]->length - $oldLength) / $duration) / 60;
                                     }
                                 }
-                                foreach ($runningCodes as $runningCode) {
-                                    if ($runningCode->id == $records[$i]->error_id) {
+                                foreach($runningCodes as $runningCode) {
+                                    if($runningCode->id == $records[$i]->error_id) {
                                         $runTime += $duration;
                                         $production += $records[$i]->length - $oldLength;
-                                        if ($data['machine']->time_uom == 'Min') {
+                                        if($data['machine']->time_uom == 'Min') {
                                             $targetHour += ($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0;
                                             $jobTargetHour += ($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0;
-                                        } elseif ($data['machine']->time_uom == 'Hr') {
+                                        } elseif($data['machine']->time_uom == 'Hr') {
                                             $targetHour += (($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0) * 60;
                                             $jobTargetHour += (($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0) * 60;
 
-                                        } elseif ($data['machine']->time_uom == 'Sec') {
+                                        } elseif($data['machine']->time_uom == 'Sec') {
                                             $targetHour = ((($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0) / 60);
                                             $jobTargetHour = ((($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0) / 60);
                                         }
 
-                                        if (isset($records[$i]->job_trimwidth) && isset($records[$i]->job_reelwidth) && isset($records[$i]->job_ups) && isset($machine->machine_width)) {
+                                        if(isset($records[$i]->job_trimwidth) && isset($records[$i]->job_reelwidth) && isset($records[$i]->job_ups) && isset($machine->machine_width)) {
 
                                             $rotoeyeNextProduction += $records[$i]->length - $oldLength;
                                             $productionArea += ($records[$i]->job_trimwidth + ($records[$i]->job_reelwidth * $records[$i]->job_ups)) * ($records[$i]->length - $oldLength);
                                             $jobProductionArea += ($records[$i]->job_trimwidth + ($records[$i]->job_reelwidth * $records[$i]->job_ups)) * ($records[$i]->length - $oldLength);
-                                            if (isset($records[$i]->job_gsm)) {
+                                            if(isset($records[$i]->job_gsm)) {
                                                 $gsm += $records[$i]->job_gsm * ($records[$i]->job_trimwidth + ($records[$i]->job_reelwidth * $records[$i]->job_ups)) * ($records[$i]->length - $oldLength);
                                                 $jobGsm += $records[$i]->job_gsm * ($records[$i]->job_trimwidth + ($records[$i]->job_reelwidth * $records[$i]->job_ups)) * ($records[$i]->length - $oldLength);
 
                                             }
 
                                         }
-                                        if (isset($records[$i]->col) && isset($records[$i]->job_ups) && ($records[$i]->job_ups > 0) && ($records[$i]->col > 0)) {
+                                        if(isset($records[$i]->col) && isset($records[$i]->job_ups) && ($records[$i]->job_ups > 0) && ($records[$i]->col > 0)) {
                                             $ea += ($records[$i]->length - $oldLength) * $records[$i]->col * $records[$i]->job_ups;
                                             $jobEa += ($records[$i]->length - $oldLength) * $records[$i]->col * $records[$i]->job_ups;
                                         }
@@ -1424,17 +1420,17 @@ class ReportsController extends Controller
 
                                     }
                                 }
-                                foreach ($idleErrors as $idleError) {
-                                    if ($idleError->id == $records[$i]->error_id) {
+                                foreach($idleErrors as $idleError) {
+                                    if($idleError->id == $records[$i]->error_id) {
                                         $idleTime += $duration;
                                     }
                                 }
-                                foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                    if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                foreach($jobWaitingCodes as $jobWaitingCode) {
+                                    if($jobWaitingCode->id == $records[$i]->error_id) {
                                         $jobWaitTime += $duration;
                                     }
                                 }
-                                if ($records[$i]->length - $oldLength < 0) {
+                                if($records[$i]->length - $oldLength < 0) {
                                     array_push($data['negativeRecords'], [
                                         "startDate" => $startDate,
                                         "endDate" => $endDate,
@@ -1488,25 +1484,25 @@ class ReportsController extends Controller
                                     "process_name" => $records[$i]->process_name,
                                 ]);
 
-                                if ($jobRunTime == 0) {
+                                if($jobRunTime == 0) {
                                     $jobPerformance = 0;
                                     $jobAverageSpeed = 0;
                                 } else {
 
-                                    if ($data['machine']->time_uom == 'Min') {
+                                    if($data['machine']->time_uom == 'Min') {
                                         $jobPerformance = (($jobProduction / $jobRunTime) / $running_speed) * 100;
                                         $jobAverageSpeed = $jobProduction / $jobRunTime;
-                                    } elseif ($data['machine']->time_uom == 'Hr') {
+                                    } elseif($data['machine']->time_uom == 'Hr') {
                                         $jobPerformance = (($jobProduction / $jobRunTime) * 60 / $running_speed) * 100;
                                         $jobAverageSpeed = ($jobProduction / $jobRunTime) * 60;
-                                    } elseif ($data['machine']->time_uom == 'Sec') {
+                                    } elseif($data['machine']->time_uom == 'Sec') {
                                         $jobPerformance = ((($jobProduction / $jobRunTime) / 60) / $running_speed) * 100;
                                         $jobAverageSpeed = (($jobProduction / $jobRunTime) / 60);
                                     }
                                 }
-                                for ($j = 0; $j < count($data['records']); $j++) {
+                                for($j = 0; $j < count($data['records']); $j++) {
                                     $jobUtilization = 0;
-                                    if (isset($records[$i]->job_trimwidth) && isset($records[$i]->job_reelwidth) && isset($records[$i]->job_ups) && isset($machine->machine_width) && $jobProduction > 0) {
+                                    if(isset($records[$i]->job_trimwidth) && isset($records[$i]->job_reelwidth) && isset($records[$i]->job_ups) && isset($machine->machine_width) && $jobProduction > 0) {
                                         $jobUtilization = $jobProductionArea / ($jobProduction * $machine->machine_width) * 100;
                                     }
 
@@ -1534,7 +1530,7 @@ class ReportsController extends Controller
                             }
                         }
                     }
-                    if (Session::get('rights') == 0) {
+                    if(Session::get('rights') == 0) {
                         $data['user'] = Users::find($loginRecord[0]->user_id);
                     } else {
                         $data['user'] = Users::find(Session::get('user_name'));
@@ -1555,7 +1551,7 @@ class ReportsController extends Controller
                     $data['current_time'] = date('Y-m-d H:i:s');
                     //return $data['records'];
 
-                    if (count($data['negativeRecords']) > 0) {
+                    if(count($data['negativeRecords']) > 0) {
 
                         //      Mail::send('emails.negative-meters', $data, function ($message) use ($data) {
                         //     $message->from('systems.services@packages.com.pk', 'RotoEye Cloud');
@@ -1577,11 +1573,11 @@ class ReportsController extends Controller
                     Session::flash("error", "No Record for the selected shift and date. Please try again.");
                     return Redirect::back();
                 }
-            } elseif ($request->input('reportType') == 'shift-production-report-quality') {
+            } elseif($request->input('reportType') == 'shift-production-report-quality') {
                 $shiftSelection = $request->input('shiftSelection');
                 $machine = Machine::find($machine_id);
                 //    dump($shiftSelection[0]);
-                if ($shiftSelection[0] == 'All-Day') {
+                if($shiftSelection[0] == 'All-Day') {
                     // $machine=Machine::find($machine_id);
 
                     $shifts_id = [];
@@ -1591,7 +1587,7 @@ class ReportsController extends Controller
                     // foreach ($machine->section->department->businessUnit->company->shifts as $shift){
                     //     array_push($shifts_id,$shift->id);
                     // }
-                    foreach ($machine->section->department->businessUnit->shifts as $shift) {
+                    foreach($machine->section->department->businessUnit->shifts as $shift) {
                         array_push($shifts_id, $shift->id);
                     }
 
@@ -1606,20 +1602,20 @@ class ReportsController extends Controller
                     $data['from'] = $from_date;
                     $data['to'] = $to_date;
 
-                    $startDateTime = date('Y-m-d H:i:s', strtotime($data['from'] . ' + ' . $minStarted . ' minutes'));
-                    $endDateTime = date('Y-m-d H:i:s', strtotime($data['to'] . ' + ' . $minEnded . ' minutes'));
+                    $startDateTime = date('Y-m-d H:i:s', strtotime($data['from'].' + '.$minStarted.' minutes'));
+                    $endDateTime = date('Y-m-d H:i:s', strtotime($data['to'].' + '.$minEnded.' minutes'));
 
                 } else {
 
                     $minStarted = Shift::find($shiftSelection[0])->min_started;
                     $minEnded = Shift::find($shiftSelection[count($shiftSelection) - 1])->min_ended;
-                    $startDateTime = date('Y-m-d H:i:s', strtotime($date . ' + ' . $minStarted . ' minutes'));
-                    $endDateTime = date('Y-m-d H:i:s', strtotime($date . ' + ' . $minEnded . ' minutes'));
+                    $startDateTime = date('Y-m-d H:i:s', strtotime($date.' + '.$minStarted.' minutes'));
+                    $endDateTime = date('Y-m-d H:i:s', strtotime($date.' + '.$minEnded.' minutes'));
 
                     // dd($minStarted, $minEnded);
                 }
 
-                if (date('Y-m-d H:i:s') < $endDateTime) {
+                if(date('Y-m-d H:i:s') < $endDateTime) {
                     $endDateTime = date('Y-m-d H:i:s');
                 }
 
@@ -1684,7 +1680,7 @@ class ReportsController extends Controller
 
                 //  dump($endDateTime);
                 //dump(count($records));
-                if (count($records) > 0) {
+                if(count($records) > 0) {
                     $data['records'] = [];
                     $data['negativeRecords'] = [];
                     $startDate = $records[0]->run_date_time;
@@ -1705,8 +1701,8 @@ class ReportsController extends Controller
                     $totalOperationallosses = 0;
 
                     $totalTime = (strtotime($endDateTime) - strtotime($startDateTime)) / 60;
-                    if (count($records) > 1) {
-                        for ($i = 0; $i < count($records); $i++) {
+                    if(count($records) > 1) {
+                        for($i = 0; $i < count($records); $i++) {
                             $rntime = 0;
                             $idltime = 0;
                             $jbtime = 0;
@@ -1715,36 +1711,36 @@ class ReportsController extends Controller
                             $plloss = 0;
                             $oploss = 0;
 
-                            if (isset($records[$i + 1])) {
+                            if(isset($records[$i + 1])) {
                                 //if($records[$i]->error_id != $records[$i+1]->error_id || $records[$i]->user_id != $records[$i+1]->user_id || $records[$i]->job_id != $records[$i+1]->job_id || ($records[$i]->job_id == $records[$i+1]->job_id  && $records[$i]->shift_number==3  ) ){
-                                if ($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
+                                if($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
                                     $endDate = $records[$i]->run_date_time;
                                     $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                     $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
                                     $totalLength += $records[$i]->length - $oldLength;
 
-                                    if ($data['machine']->time_uom == 'Hr') {
-                                        if ($duration == 0) {
+                                    if($data['machine']->time_uom == 'Hr') {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = (($records[$i]->length - $oldLength) / $duration) * 60;
                                         }
-                                    } elseif ($data['machine']->time_uom == 'Min') {
-                                        if ($duration == 0) {
+                                    } elseif($data['machine']->time_uom == 'Min') {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = ($records[$i]->length - $oldLength) / $duration;
                                         }
                                     } else {
-                                        if ($duration == 0) {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = (($records[$i]->length - $oldLength) / $duration) / 60;
                                         }
                                     }
 
-                                    foreach ($runningCodes as $runningCode) {
-                                        if ($runningCode->id == $records[$i]->error_id) {
+                                    foreach($runningCodes as $runningCode) {
+                                        if($runningCode->id == $records[$i]->error_id) {
                                             $runTime += $duration;
                                             $rntime += $duration;
                                             $jobRunTime += $duration;
@@ -1754,41 +1750,41 @@ class ReportsController extends Controller
                                         }
                                     }
                                     //Waste Codes Added
-                                    foreach ($wasteCodes as $wasteCode) {
-                                        if ($wasteCode->id == $records[$i]->error_id) {
+                                    foreach($wasteCodes as $wasteCode) {
+                                        if($wasteCode->id == $records[$i]->error_id) {
                                             $waste += $records[$i]->length - $oldLength;
                                             $jobWaste += $records[$i]->length - $oldLength;
                                         }
                                     }
-                                    foreach ($idleErrors as $idleError) {
-                                        if ($idleError->id == $records[$i]->error_id) {
+                                    foreach($idleErrors as $idleError) {
+                                        if($idleError->id == $records[$i]->error_id) {
                                             $idleTime += $duration;
                                             $idltime = $duration;
                                         }
                                     }
-                                    foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                        if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                    foreach($jobWaitingCodes as $jobWaitingCode) {
+                                        if($jobWaitingCode->id == $records[$i]->error_id) {
                                             $jobWaitTime += $duration;
                                             $jbtime = $duration;
                                         }
                                     }
 
-                                    if ($records[$i]->length - $oldLength < 0) {
+                                    if($records[$i]->length - $oldLength < 0) {
                                         //
                                     }
 
-                                    foreach ($strategiclossesCodes as $strategiclossesCode) {
-                                        if ($strategiclossesCode->id == $records[$i]->error_id) {
+                                    foreach($strategiclossesCodes as $strategiclossesCode) {
+                                        if($strategiclossesCode->id == $records[$i]->error_id) {
                                             $stloss += $duration;
                                         }
                                     }
-                                    foreach ($plannedlossesCodes as $plannedlossesCode) {
-                                        if ($plannedlossesCode->id == $records[$i]->error_id) {
+                                    foreach($plannedlossesCodes as $plannedlossesCode) {
+                                        if($plannedlossesCode->id == $records[$i]->error_id) {
                                             $plloss += $duration;
                                         }
                                     }
-                                    foreach ($operationallossesCodes as $operationallossesCode) {
-                                        if ($operationallossesCode->id == $records[$i]->error_id) {
+                                    foreach($operationallossesCodes as $operationallossesCode) {
+                                        if($operationallossesCode->id == $records[$i]->error_id) {
                                             $oploss += $duration;
                                         }
                                     }
@@ -1830,24 +1826,24 @@ class ReportsController extends Controller
                                     ]);
 
                                     $startDate = $endDate;
-                                    if ($records[$i]->job_id != $records[$i + 1]->job_id) {
+                                    if($records[$i]->job_id != $records[$i + 1]->job_id) {
                                         $oldLength = $records[$i + 1]->length;
-                                        if ($jobRunTime == 0) {
+                                        if($jobRunTime == 0) {
                                             $jobPerformance = 0;
                                             $jobAverageSpeed = 0;
                                         } else {
-                                            if ($data['machine']->time_uom == 'Min') {
+                                            if($data['machine']->time_uom == 'Min') {
                                                 $jobPerformance = (($jobProduction / $jobRunTime) / $data['machine']->max_speed) * 100;
                                                 $jobAverageSpeed = $jobProduction / $jobRunTime;
-                                            } elseif ($data['machine']->time_uom == 'Hr') {
+                                            } elseif($data['machine']->time_uom == 'Hr') {
                                                 $jobPerformance = (($jobProduction / $jobRunTime) * 60 / $data['machine']->max_speed) * 100;
                                                 $jobAverageSpeed = ($jobProduction / $jobRunTime) * 60;
-                                            } elseif ($data['machine']->time_uom == 'Sec') {
+                                            } elseif($data['machine']->time_uom == 'Sec') {
                                                 $jobPerformance = ((($jobProduction / $jobRunTime) / 60) / $data['machine']->max_speed) * 100;
                                                 $jobAverageSpeed = (($jobProduction / $jobRunTime) / 60);
                                             }
                                         }
-                                        for ($j = 0; $j < count($data['records']); $j++) {
+                                        for($j = 0; $j < count($data['records']); $j++) {
                                             array_push($data['records'][$j], [
                                                 "jobProduction" => $jobProduction,
                                                 "jobPerformance" => $jobPerformance,
@@ -1869,28 +1865,28 @@ class ReportsController extends Controller
                                 $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
                                 $totalLength += $records[$i]->length - $oldLength;
 
-                                if ($data['machine']->time_uom == 'Hr') {
-                                    if ($duration == 0) {
+                                if($data['machine']->time_uom == 'Hr') {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = (($records[$i]->length - $oldLength) / $duration) * 60;
                                     }
-                                } elseif ($data['machine']->time_uom == 'Min') {
-                                    if ($duration == 0) {
+                                } elseif($data['machine']->time_uom == 'Min') {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = ($records[$i]->length - $oldLength) / $duration;
                                     }
                                 } else {
-                                    if ($duration == 0) {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = (($records[$i]->length - $oldLength) / $duration) / 60;
                                     }
                                 }
 
-                                foreach ($runningCodes as $runningCode) {
-                                    if ($runningCode->id == $records[$i]->error_id) {
+                                foreach($runningCodes as $runningCode) {
+                                    if($runningCode->id == $records[$i]->error_id) {
                                         $runTime += $duration;
                                         $rntime += $duration;
                                         $production += $records[$i]->length - $oldLength;
@@ -1899,39 +1895,39 @@ class ReportsController extends Controller
                                     }
                                 }
 
-                                foreach ($wasteCodes as $wasteCode) {
-                                    if ($wasteCode->id == $records[$i]->error_id) {
+                                foreach($wasteCodes as $wasteCode) {
+                                    if($wasteCode->id == $records[$i]->error_id) {
                                         $waste += $records[$i]->length - $oldLength;
                                         $jobWaste += $records[$i]->length - $oldLength;
                                     }
                                 }
-                                foreach ($idleErrors as $idleError) {
-                                    if ($idleError->id == $records[$i]->error_id) {
+                                foreach($idleErrors as $idleError) {
+                                    if($idleError->id == $records[$i]->error_id) {
                                         $idleTime += $duration;
                                         $idltime = $duration;
                                     }
                                 }
-                                foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                    if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                foreach($jobWaitingCodes as $jobWaitingCode) {
+                                    if($jobWaitingCode->id == $records[$i]->error_id) {
                                         $jobWaitTime += $duration;
                                         $jbtime = $duration;
                                     }
                                 }
-                                if ($records[$i]->length - $oldLength < 0) {
+                                if($records[$i]->length - $oldLength < 0) {
                                     //
                                 }
-                                foreach ($strategiclossesCodes as $strategiclossesCode) {
-                                    if ($strategiclossesCode->id == $records[$i]->error_id) {
+                                foreach($strategiclossesCodes as $strategiclossesCode) {
+                                    if($strategiclossesCode->id == $records[$i]->error_id) {
                                         $stloss += $duration;
                                     }
                                 }
-                                foreach ($plannedlossesCodes as $plannedlossesCode) {
-                                    if ($plannedlossesCode->id == $records[$i]->error_id) {
+                                foreach($plannedlossesCodes as $plannedlossesCode) {
+                                    if($plannedlossesCode->id == $records[$i]->error_id) {
                                         $plloss += $duration;
                                     }
                                 }
-                                foreach ($operationallossesCodes as $operationallossesCode) {
-                                    if ($operationallossesCode->id == $records[$i]->error_id) {
+                                foreach($operationallossesCodes as $operationallossesCode) {
+                                    if($operationallossesCode->id == $records[$i]->error_id) {
                                         $oploss += $duration;
                                     }
                                 }
@@ -1976,23 +1972,23 @@ class ReportsController extends Controller
                         }
 
                         // dd($data['records']);
-                        for ($k = 0; $k < count($data['records']); $k++) {
-                            if ($jobRunTime == 0) {
+                        for($k = 0; $k < count($data['records']); $k++) {
+                            if($jobRunTime == 0) {
                                 $jobPerformance = 0;
                                 $jobAverageSpeed = 0;
                             } else {
-                                if ($data['machine']->time_uom == 'Min') {
+                                if($data['machine']->time_uom == 'Min') {
                                     $jobPerformance = (($jobProduction / $jobRunTime) / $data['machine']->max_speed) * 100;
                                     $jobAverageSpeed = $jobProduction / $jobRunTime;
-                                } elseif ($data['machine']->time_uom == 'Hr') {
+                                } elseif($data['machine']->time_uom == 'Hr') {
                                     $jobPerformance = (($jobProduction / $jobRunTime) * 60 / $data['machine']->max_speed) * 100;
                                     $jobAverageSpeed = ($jobProduction / $jobRunTime) * 60;
-                                } elseif ($data['machine']->time_uom == 'Sec') {
+                                } elseif($data['machine']->time_uom == 'Sec') {
                                     $jobPerformance = ((($jobProduction / $jobRunTime) / 60) / $data['machine']->max_speed) * 100;
                                     $jobAverageSpeed = (($jobProduction / $jobRunTime) / 60);
                                 }
                             }
-                            if (!isset($data['records'][$k][0]['jobProduction']) || !isset($data['records'][$k][0]['jobPerformance'])) {
+                            if(!isset($data['records'][$k][0]['jobProduction']) || !isset($data['records'][$k][0]['jobPerformance'])) {
                                 array_push($data['records'][$k], [
                                     "jobProduction" => $jobProduction,
                                     "jobPerformance" => $jobPerformance,
@@ -2003,10 +1999,10 @@ class ReportsController extends Controller
                             }
                         }
 
-                        if ($runTime > 0) {
-                            if ($data['machine']->time_uom == 'Hr') {
+                        if($runTime > 0) {
+                            if($data['machine']->time_uom == 'Hr') {
                                 $actualSpeed = $production / $runTime * 60;
-                            } elseif ($data['machine']->time_uom == 'Min') {
+                            } elseif($data['machine']->time_uom == 'Min') {
                                 $actualSpeed = $production / $runTime;
                             } else {
                                 $actualSpeed = $production / $runTime / 60;
@@ -2015,7 +2011,7 @@ class ReportsController extends Controller
                             $actualSpeed = 0;
                         }
                     }
-                    if (Session::get('rights') == 0) {
+                    if(Session::get('rights') == 0) {
                         $data['user'] = Users::find($loginRecord[0]->user_id);
                     } else {
                         $data['user'] = Users::find(Session::get('user_name'));
@@ -2054,10 +2050,10 @@ class ReportsController extends Controller
                     })->where('machine_id', '=', $data['machine']->id)->get();
 
 
-                    if (isset($existingRecords)) {
-                        if (count($existingRecords) > 0) {
+                    if(isset($existingRecords)) {
+                        if(count($existingRecords) > 0) {
                             //if(count($existingRecords) < count($data['records'])){
-                            foreach ($existingRecords as $r) {
+                            foreach($existingRecords as $r) {
                                 $r->delete();
                             }
                             // }
@@ -2066,7 +2062,7 @@ class ReportsController extends Controller
 
                     $dateParts = explode('/', $data['date']);
                     $month = $dateParts[0];
-                    $monthInt = (int) $month;
+                    $monthInt = (int)$month;
                     $monthZeroPadded = sprintf("%02d", $monthInt);
 
                     $dateStr = $data['date'];
@@ -2079,9 +2075,9 @@ class ReportsController extends Controller
 
                     $rcords = $data['records'];
                     $chk = [1, 2, 3, 4];
-                    for ($f = 0; $f < count($rcords); $f++) {
-                        if (isset($rcords[$f + 1])) {
-                            $endd = date("Y-m-d H:i:s", strtotime($endDateTime . ' -1 day'));
+                    for($f = 0; $f < count($rcords); $f++) {
+                        if(isset($rcords[$f + 1])) {
+                            $endd = date("Y-m-d H:i:s", strtotime($endDateTime.' -1 day'));
                             //  dump($endd);
 
                             $exp = explode(' ', $endd);
@@ -2090,8 +2086,8 @@ class ReportsController extends Controller
                             $nshday = date("Y-m-d", strtotime($rcords[$f + 1]['shiftsdate']));
 
                             $pshdayexp = explode(' ', $nshday);
-                            $newendd = $pshdayexp[0] . ' ' . $exp[1];
-                            if ($rcords[$f]['job_id'] == $rcords[$f + 1]['job_id'] && $pshday != $nshday) {
+                            $newendd = $pshdayexp[0].' '.$exp[1];
+                            if($rcords[$f]['job_id'] == $rcords[$f + 1]['job_id'] && $pshday != $nshday) {
                                 // dump($newendd);
                                 $data['records'][$f]['insterted'] = 'inserted';
 
@@ -2113,9 +2109,9 @@ class ReportsController extends Controller
 
                     // dump($data['records']);
 
-                    foreach ($data['records'] as $record) {
+                    foreach($data['records'] as $record) {
                         // dd($machine->section);
-                        if (isset($record['insterted'])) {
+                        if(isset($record['insterted'])) {
                             continue;
                         }
                         $reportdata = new GroupProductionReport();
@@ -2157,7 +2153,7 @@ class ReportsController extends Controller
                     }
 
 
-                    if (count($data['negativeRecords']) > 0) {
+                    if(count($data['negativeRecords']) > 0) {
                         Session::flash('success', 'We have resolved some negative meters during this production period. Please run the report again.');
                         $row['view'] = View::make('reports.shift-production-report-quality', $data)->render();
                         return Redirect::back();
@@ -2173,12 +2169,12 @@ class ReportsController extends Controller
             }
 
             ////// mine
-            elseif ($request->input('reportType') == 'shift-production-report-quality-toe') {
+            elseif($request->input('reportType') == 'shift-production-report-quality-toe') {
                 // dump($request->all());
                 $shiftSelection = $request->input('shiftSelection');
                 $machine = Machine::find($machine_id);
                 // dump($shiftSelection[0]);
-                if ($shiftSelection[0] == 'All-Day') {
+                if($shiftSelection[0] == 'All-Day') {
                     // $machine=Machine::find($machine_id);
 
                     $shifts_id = [];
@@ -2188,7 +2184,7 @@ class ReportsController extends Controller
                     //     array_push($shifts_id,$shift->id);
                     // }
 
-                    foreach ($machine->section->department->businessUnit->shifts as $shift) {
+                    foreach($machine->section->department->businessUnit->shifts as $shift) {
                         array_push($shifts_id, $shift->id);
                     }
                     //    Updated by Abdullah 22-11-23 end
@@ -2201,19 +2197,19 @@ class ReportsController extends Controller
                     $data['from'] = $from_date;
                     $data['to'] = $to_date;
 
-                    $startDateTime = date('Y-m-d H:i:s', strtotime($data['from'] . ' + ' . $minStarted . ' minutes'));
-                    $endDateTime = date('Y-m-d H:i:s', strtotime($data['to'] . ' + ' . $minEnded . ' minutes'));
+                    $startDateTime = date('Y-m-d H:i:s', strtotime($data['from'].' + '.$minStarted.' minutes'));
+                    $endDateTime = date('Y-m-d H:i:s', strtotime($data['to'].' + '.$minEnded.' minutes'));
 
                 } else {
                     $minStarted = Shift::find($shiftSelection[0])->min_started;
                     $minEnded = Shift::find($shiftSelection[count($shiftSelection) - 1])->min_ended;
-                    $startDateTime = date('Y-m-d H:i:s', strtotime($date . ' + ' . $minStarted . ' minutes'));
-                    $endDateTime = date('Y-m-d H:i:s', strtotime($date . ' + ' . $minEnded . ' minutes'));
+                    $startDateTime = date('Y-m-d H:i:s', strtotime($date.' + '.$minStarted.' minutes'));
+                    $endDateTime = date('Y-m-d H:i:s', strtotime($date.' + '.$minEnded.' minutes'));
 
                     // dd($minStarted, $minEnded);
                 }
 
-                if (date('Y-m-d H:i:s') < $endDateTime) {
+                if(date('Y-m-d H:i:s') < $endDateTime) {
                     $endDateTime = date('Y-m-d H:i:s');
                 }
 
@@ -2267,7 +2263,7 @@ class ReportsController extends Controller
                     ->orderby('run_date_time', 'ASC')
                     ->get();
 
-                if (count($records) > 0) {
+                if(count($records) > 0) {
                     $data['records'] = [];
                     $data['negativeRecords'] = [];
                     $startDate = $records[0]->run_date_time;
@@ -2287,37 +2283,37 @@ class ReportsController extends Controller
                     $totalOperationallosses = 0;
 
                     $totalTime = (strtotime($endDateTime) - strtotime($startDateTime)) / 60;
-                    if (count($records) > 1) {
-                        for ($i = 0; $i < count($records); $i++) {
-                            if (isset($records[$i + 1])) {
-                                if ($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
+                    if(count($records) > 1) {
+                        for($i = 0; $i < count($records); $i++) {
+                            if(isset($records[$i + 1])) {
+                                if($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
                                     $endDate = $records[$i]->run_date_time;
                                     $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                     $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
                                     $totalLength += $records[$i]->length - $oldLength;
 
-                                    if ($data['machine']->time_uom == 'Hr') {
-                                        if ($duration == 0) {
+                                    if($data['machine']->time_uom == 'Hr') {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = (($records[$i]->length - $oldLength) / $duration) * 60;
                                         }
-                                    } elseif ($data['machine']->time_uom == 'Min') {
-                                        if ($duration == 0) {
+                                    } elseif($data['machine']->time_uom == 'Min') {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = ($records[$i]->length - $oldLength) / $duration;
                                         }
                                     } else {
-                                        if ($duration == 0) {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = (($records[$i]->length - $oldLength) / $duration) / 60;
                                         }
                                     }
 
-                                    foreach ($runningCodes as $runningCode) {
-                                        if ($runningCode->id == $records[$i]->error_id) {
+                                    foreach($runningCodes as $runningCode) {
+                                        if($runningCode->id == $records[$i]->error_id) {
                                             $runTime += $duration;
                                             $jobRunTime += $duration;
                                             $production += $records[$i]->length - $oldLength;
@@ -2325,35 +2321,35 @@ class ReportsController extends Controller
                                         }
                                     }
                                     //Waste Codes Added
-                                    foreach ($wasteCodes as $wasteCode) {
-                                        if ($wasteCode->id == $records[$i]->error_id) {
+                                    foreach($wasteCodes as $wasteCode) {
+                                        if($wasteCode->id == $records[$i]->error_id) {
                                             $waste += $records[$i]->length - $oldLength;
                                             $jobWaste += $records[$i]->length - $oldLength;
                                         }
                                     }
-                                    foreach ($idleErrors as $idleError) {
-                                        if ($idleError->id == $records[$i]->error_id) {
+                                    foreach($idleErrors as $idleError) {
+                                        if($idleError->id == $records[$i]->error_id) {
                                             $idleTime += $duration;
                                         }
                                     }
-                                    foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                        if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                    foreach($jobWaitingCodes as $jobWaitingCode) {
+                                        if($jobWaitingCode->id == $records[$i]->error_id) {
                                             $jobWaitTime += $duration;
                                         }
                                     }
 
-                                    foreach ($strategiclossesCodes as $strategiclossesCode) {
-                                        if ($strategiclossesCode->id == $records[$i]->error_id) {
+                                    foreach($strategiclossesCodes as $strategiclossesCode) {
+                                        if($strategiclossesCode->id == $records[$i]->error_id) {
                                             $totalStrategiclosses += $duration;
                                         }
                                     }
-                                    foreach ($plannedlossesCodes as $plannedlossesCode) {
-                                        if ($plannedlossesCode->id == $records[$i]->error_id) {
+                                    foreach($plannedlossesCodes as $plannedlossesCode) {
+                                        if($plannedlossesCode->id == $records[$i]->error_id) {
                                             $totalPlannedlosses += $duration;
                                         }
                                     }
-                                    foreach ($operationallossesCodes as $operationallossesCode) {
-                                        if ($operationallossesCode->id == $records[$i]->error_id) {
+                                    foreach($operationallossesCodes as $operationallossesCode) {
+                                        if($operationallossesCode->id == $records[$i]->error_id) {
                                             $totalOperationallosses += $duration;
                                         }
                                     }
@@ -2361,7 +2357,7 @@ class ReportsController extends Controller
 
 
 
-                                    if ($records[$i]->length - $oldLength < 0) {
+                                    if($records[$i]->length - $oldLength < 0) {
                                         //
                                     }
 
@@ -2390,24 +2386,24 @@ class ReportsController extends Controller
                                     ]);
 
                                     $startDate = $endDate;
-                                    if ($records[$i]->job_id != $records[$i + 1]->job_id) {
+                                    if($records[$i]->job_id != $records[$i + 1]->job_id) {
                                         $oldLength = $records[$i + 1]->length;
-                                        if ($jobRunTime == 0) {
+                                        if($jobRunTime == 0) {
                                             $jobPerformance = 0;
                                             $jobAverageSpeed = 0;
                                         } else {
-                                            if ($data['machine']->time_uom == 'Min') {
+                                            if($data['machine']->time_uom == 'Min') {
                                                 $jobPerformance = (($jobProduction / $jobRunTime) / $data['machine']->max_speed) * 100;
                                                 $jobAverageSpeed = $jobProduction / $jobRunTime;
-                                            } elseif ($data['machine']->time_uom == 'Hr') {
+                                            } elseif($data['machine']->time_uom == 'Hr') {
                                                 $jobPerformance = (($jobProduction / $jobRunTime) * 60 / $data['machine']->max_speed) * 100;
                                                 $jobAverageSpeed = ($jobProduction / $jobRunTime) * 60;
-                                            } elseif ($data['machine']->time_uom == 'Sec') {
+                                            } elseif($data['machine']->time_uom == 'Sec') {
                                                 $jobPerformance = ((($jobProduction / $jobRunTime) / 60) / $data['machine']->max_speed) * 100;
                                                 $jobAverageSpeed = (($jobProduction / $jobRunTime) / 60);
                                             }
                                         }
-                                        for ($j = 0; $j < count($data['records']); $j++) {
+                                        for($j = 0; $j < count($data['records']); $j++) {
                                             array_push($data['records'][$j], [
                                                 "jobProduction" => $jobProduction,
                                                 "jobPerformance" => $jobPerformance,
@@ -2429,68 +2425,68 @@ class ReportsController extends Controller
                                 $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
                                 $totalLength += $records[$i]->length - $oldLength;
 
-                                if ($data['machine']->time_uom == 'Hr') {
-                                    if ($duration == 0) {
+                                if($data['machine']->time_uom == 'Hr') {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = (($records[$i]->length - $oldLength) / $duration) * 60;
                                     }
-                                } elseif ($data['machine']->time_uom == 'Min') {
-                                    if ($duration == 0) {
+                                } elseif($data['machine']->time_uom == 'Min') {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = ($records[$i]->length - $oldLength) / $duration;
                                     }
                                 } else {
-                                    if ($duration == 0) {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = (($records[$i]->length - $oldLength) / $duration) / 60;
                                     }
                                 }
 
-                                foreach ($runningCodes as $runningCode) {
-                                    if ($runningCode->id == $records[$i]->error_id) {
+                                foreach($runningCodes as $runningCode) {
+                                    if($runningCode->id == $records[$i]->error_id) {
                                         $runTime += $duration;
                                         $production += $records[$i]->length - $oldLength;
                                         $jobProduction += $records[$i]->length - $oldLength;
                                     }
                                 }
 
-                                foreach ($wasteCodes as $wasteCode) {
-                                    if ($wasteCode->id == $records[$i]->error_id) {
+                                foreach($wasteCodes as $wasteCode) {
+                                    if($wasteCode->id == $records[$i]->error_id) {
                                         $waste += $records[$i]->length - $oldLength;
                                         $jobWaste += $records[$i]->length - $oldLength;
                                     }
                                 }
-                                foreach ($idleErrors as $idleError) {
-                                    if ($idleError->id == $records[$i]->error_id) {
+                                foreach($idleErrors as $idleError) {
+                                    if($idleError->id == $records[$i]->error_id) {
                                         $idleTime += $duration;
                                     }
                                 }
-                                foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                    if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                foreach($jobWaitingCodes as $jobWaitingCode) {
+                                    if($jobWaitingCode->id == $records[$i]->error_id) {
                                         $jobWaitTime += $duration;
                                     }
                                 }
 
 
-                                foreach ($strategiclossesCodes as $strategiclossesCode) {
-                                    if ($strategiclossesCode->id == $records[$i]->error_id) {
+                                foreach($strategiclossesCodes as $strategiclossesCode) {
+                                    if($strategiclossesCode->id == $records[$i]->error_id) {
                                         $totalStrategiclosses += $duration;
                                     }
                                 }
-                                foreach ($plannedlossesCodes as $plannedlossesCode) {
-                                    if ($plannedlossesCode->id == $records[$i]->error_id) {
+                                foreach($plannedlossesCodes as $plannedlossesCode) {
+                                    if($plannedlossesCode->id == $records[$i]->error_id) {
                                         $totalPlannedlosses += $duration;
                                     }
                                 }
-                                foreach ($operationallossesCodes as $operationallossesCode) {
-                                    if ($operationallossesCode->id == $records[$i]->error_id) {
+                                foreach($operationallossesCodes as $operationallossesCode) {
+                                    if($operationallossesCode->id == $records[$i]->error_id) {
                                         $totalOperationallosses += $duration;
                                     }
                                 }
-                                if ($records[$i]->length - $oldLength < 0) {
+                                if($records[$i]->length - $oldLength < 0) {
                                     //
                                 }
                                 array_push($data['records'], [
@@ -2523,23 +2519,23 @@ class ReportsController extends Controller
                         }
 
                         // dd($data['records']);
-                        for ($k = 0; $k < count($data['records']); $k++) {
-                            if ($jobRunTime == 0) {
+                        for($k = 0; $k < count($data['records']); $k++) {
+                            if($jobRunTime == 0) {
                                 $jobPerformance = 0;
                                 $jobAverageSpeed = 0;
                             } else {
-                                if ($data['machine']->time_uom == 'Min') {
+                                if($data['machine']->time_uom == 'Min') {
                                     $jobPerformance = (($jobProduction / $jobRunTime) / $data['machine']->max_speed) * 100;
                                     $jobAverageSpeed = $jobProduction / $jobRunTime;
-                                } elseif ($data['machine']->time_uom == 'Hr') {
+                                } elseif($data['machine']->time_uom == 'Hr') {
                                     $jobPerformance = (($jobProduction / $jobRunTime) * 60 / $data['machine']->max_speed) * 100;
                                     $jobAverageSpeed = ($jobProduction / $jobRunTime) * 60;
-                                } elseif ($data['machine']->time_uom == 'Sec') {
+                                } elseif($data['machine']->time_uom == 'Sec') {
                                     $jobPerformance = ((($jobProduction / $jobRunTime) / 60) / $data['machine']->max_speed) * 100;
                                     $jobAverageSpeed = (($jobProduction / $jobRunTime) / 60);
                                 }
                             }
-                            if (!isset($data['records'][$k][0]['jobProduction']) || !isset($data['records'][$k][0]['jobPerformance'])) {
+                            if(!isset($data['records'][$k][0]['jobProduction']) || !isset($data['records'][$k][0]['jobPerformance'])) {
                                 array_push($data['records'][$k], [
                                     "jobProduction" => $jobProduction,
                                     "jobPerformance" => $jobPerformance,
@@ -2550,10 +2546,10 @@ class ReportsController extends Controller
                             }
                         }
 
-                        if ($runTime > 0) {
-                            if ($data['machine']->time_uom == 'Hr') {
+                        if($runTime > 0) {
+                            if($data['machine']->time_uom == 'Hr') {
                                 $actualSpeed = $production / $runTime * 60;
-                            } elseif ($data['machine']->time_uom == 'Min') {
+                            } elseif($data['machine']->time_uom == 'Min') {
                                 $actualSpeed = $production / $runTime;
                             } else {
                                 $actualSpeed = $production / $runTime / 60;
@@ -2562,7 +2558,7 @@ class ReportsController extends Controller
                             $actualSpeed = 0;
                         }
                     }
-                    if (Session::get('rights') == 0) {
+                    if(Session::get('rights') == 0) {
                         $data['user'] = Users::find($loginRecord[0]->user_id);
                     } else {
                         $data['user'] = Users::find(Session::get('user_name'));
@@ -2601,7 +2597,7 @@ class ReportsController extends Controller
                     // Updated by Abdullah 20-11-23 end
                     // dump($data);
 
-                    if (count($data['negativeRecords']) > 0) {
+                    if(count($data['negativeRecords']) > 0) {
                         Session::flash('success', 'We have resolved some negative meters during this production period. Please run the report again.');
                         $row['view'] = View::make('reports.shift-production-report-quality-toe', $data)->render();
                         return Redirect::back();
@@ -2615,24 +2611,24 @@ class ReportsController extends Controller
                 }
             }
             /// mine
-            elseif ($request->input('reportType') == 'shift-production-report-raw') {
+            elseif($request->input('reportType') == 'shift-production-report-raw') {
                 $shiftSelection = $request->input('shiftSelection');
-                if ($shiftSelection[0] == 'All-Day') {
+                if($shiftSelection[0] == 'All-Day') {
                     $from_date = $request->input('date');
                     $to_date = $request->input('to_date');
 
                     $data['from'] = $from_date;
                     $data['to'] = $to_date;
 
-                    $startDateTime = date('Y-m-d H:i:s', strtotime($from_date . ' + 390 minutes'));
-                    $endDateTime = date('Y-m-d H:i:s', strtotime($to_date . ' + 1830 minutes'));
+                    $startDateTime = date('Y-m-d H:i:s', strtotime($from_date.' + 390 minutes'));
+                    $endDateTime = date('Y-m-d H:i:s', strtotime($to_date.' + 1830 minutes'));
                 } else {
 
                     $minStarted = Shift::find($shiftSelection[0])->min_started;
                     $minEnded = Shift::find($shiftSelection[count($shiftSelection) - 1])->min_ended;
 
-                    $startDateTime = date('Y-m-d H:i:s', strtotime($date . ' + ' . $minStarted . ' minutes'));
-                    $endDateTime = date('Y-m-d H:i:s', strtotime($date . ' + ' . $minEnded . ' minutes'));
+                    $startDateTime = date('Y-m-d H:i:s', strtotime($date.' + '.$minStarted.' minutes'));
+                    $endDateTime = date('Y-m-d H:i:s', strtotime($date.' + '.$minEnded.' minutes'));
                 }
 
                 $data['machine'] = Machine::find($machine_id);
@@ -2642,7 +2638,7 @@ class ReportsController extends Controller
                 $runningCodes = Error::select('id')->where('category', '=', 'Running')->get();
                 $jobWaitingCodes = Error::select('id')->where('category', '=', 'Job Waiting')->get();
 
-                if (date('Y-m-d H:i:s') < $endDateTime) {
+                if(date('Y-m-d H:i:s') < $endDateTime) {
                     $endDateTime = date('Y-m-d H:i:s');
                 }
 
@@ -2679,7 +2675,7 @@ class ReportsController extends Controller
                     ->where('records.run_date_time', '<=', $endDateTime)
                     ->orderby('run_date_time', 'ASC')
                     ->get();
-                if (count($records) > 0) {
+                if(count($records) > 0) {
                     $data['records'] = [];
                     $data['negativeRecords'] = [];
                     $startDate = $records[0]->run_date_time;
@@ -2694,52 +2690,52 @@ class ReportsController extends Controller
 
                     $totalTimeDifference = date_diff(date_create($startDateTime), date_create($endDateTime));
                     $totalTime = (($totalTimeDifference->y * 365 + $totalTimeDifference->m * 30 + $totalTimeDifference->d) * 24 + $totalTimeDifference->h) * 60 + $totalTimeDifference->i + $totalTimeDifference->s / 60;
-                    if (count($records) > 1) {
-                        for ($i = 0; $i < count($records); $i++) {
-                            if (isset($records[$i + 1])) {
-                                if ($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
+                    if(count($records) > 1) {
+                        for($i = 0; $i < count($records); $i++) {
+                            if(isset($records[$i + 1])) {
+                                if($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
                                     $endDate = $records[$i]->run_date_time;
                                     $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                     $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                                    if ($data['machine']->time_uom == 'Hr') {
-                                        if ($duration == 0) {
+                                    if($data['machine']->time_uom == 'Hr') {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = (($records[$i]->length - $oldLength) / $duration) * 60;
                                         }
-                                    } elseif ($data['machine']->time_uom == 'Min') {
-                                        if ($duration == 0) {
+                                    } elseif($data['machine']->time_uom == 'Min') {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = ($records[$i]->length - $oldLength) / $duration;
                                         }
                                     } else {
-                                        if ($duration == 0) {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = (($records[$i]->length - $oldLength) / $duration) / 60;
                                         }
                                     }
-                                    foreach ($runningCodes as $runningCode) {
-                                        if ($runningCode->id == $records[$i]->error_id) {
+                                    foreach($runningCodes as $runningCode) {
+                                        if($runningCode->id == $records[$i]->error_id) {
                                             $runTime += $duration;
                                             $jobRunTime += $duration;
                                             $production += $records[$i]->length - $oldLength;
                                             $jobProduction += $records[$i]->length - $oldLength;
                                         }
                                     }
-                                    foreach ($idleErrors as $idleError) {
-                                        if ($idleError->id == $records[$i]->error_id) {
+                                    foreach($idleErrors as $idleError) {
+                                        if($idleError->id == $records[$i]->error_id) {
                                             $idleTime += $duration;
                                         }
                                     }
-                                    foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                        if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                    foreach($jobWaitingCodes as $jobWaitingCode) {
+                                        if($jobWaitingCode->id == $records[$i]->error_id) {
                                             $jobWaitTime += $duration;
                                         }
                                     }
-                                    if ($duration <= $loginRecord[0]->machine->auto_downtime && $records[$i]->error_id == 500) {
-                                        if ($records[$i]->length - $oldLength < 0) {
+                                    if($duration <= $loginRecord[0]->machine->auto_downtime && $records[$i]->error_id == 500) {
+                                        if($records[$i]->length - $oldLength < 0) {
                                             array_push($data['negativeRecords'], [
                                                 "startDate" => $startDate,
                                                 "endDate" => $endDate,
@@ -2769,15 +2765,15 @@ class ReportsController extends Controller
                                             "process_name" => $records[$i]->process_name,
                                         ]);
                                         $startDate = $endDate;
-                                        if ($records[$i]->job_id != $records[$i + 1]->job_id) {
+                                        if($records[$i]->job_id != $records[$i + 1]->job_id) {
                                             $oldLength = $records[$i + 1]->length;
                                             $jobProduction = $production;
-                                            if ($jobRunTime == 0) {
+                                            if($jobRunTime == 0) {
                                                 $jobPerformance = 0;
                                             } else {
                                                 $jobPerformance = (($jobProduction / $jobRunTime) / $data['machine']->max_speed) * 100;
                                             }
-                                            foreach ($data['records'] as $record) {
+                                            foreach($data['records'] as $record) {
                                                 array_push($record, [
                                                     "jobProduction" => $jobProduction,
                                                     "jobPerformance" => $jobPerformance,
@@ -2790,7 +2786,7 @@ class ReportsController extends Controller
                                             $oldLength = $records[$i]->length;
                                         }
                                     } else {
-                                        if ($records[$i]->length - $oldLength < 0) {
+                                        if($records[$i]->length - $oldLength < 0) {
                                             array_push($data['negativeRecords'], [
                                                 "startDate" => $startDate,
                                                 "endDate" => $endDate,
@@ -2820,24 +2816,24 @@ class ReportsController extends Controller
                                             "process_name" => $records[$i]->process_name,
                                         ]);
                                         $startDate = $endDate;
-                                        if ($records[$i]->job_id != $records[$i + 1]->job_id) {
+                                        if($records[$i]->job_id != $records[$i + 1]->job_id) {
                                             $oldLength = $records[$i + 1]->length;
-                                            if ($jobRunTime == 0) {
+                                            if($jobRunTime == 0) {
                                                 $jobPerformance = 0;
                                                 $jobAverageSpeed = 0;
                                             } else {
-                                                if ($data['machine']->time_uom == 'Min') {
+                                                if($data['machine']->time_uom == 'Min') {
                                                     $jobPerformance = (($jobProduction / $jobRunTime) / $data['machine']->max_speed) * 100;
                                                     $jobAverageSpeed = $jobProduction / $jobRunTime;
-                                                } elseif ($data['machine']->time_uom == 'Hr') {
+                                                } elseif($data['machine']->time_uom == 'Hr') {
                                                     $jobPerformance = (($jobProduction / $jobRunTime) * 60 / $data['machine']->max_speed) * 100;
                                                     $jobAverageSpeed = ($jobProduction / $jobRunTime) * 60;
-                                                } elseif ($data['machine']->time_uom == 'Sec') {
+                                                } elseif($data['machine']->time_uom == 'Sec') {
                                                     $jobPerformance = ((($jobProduction / $jobRunTime) / 60) / $data['machine']->max_speed) * 100;
                                                     $jobAverageSpeed = (($jobProduction / $jobRunTime) / 60);
                                                 }
                                             }
-                                            for ($j = 0; $j < count($data['records']); $j++) {
+                                            for($j = 0; $j < count($data['records']); $j++) {
                                                 array_push($data['records'][$j], [
                                                     "jobProduction" => $jobProduction,
                                                     "jobPerformance" => $jobPerformance,
@@ -2856,44 +2852,44 @@ class ReportsController extends Controller
                                 $endDate = $records[$i]->run_date_time;
                                 $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                 $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                                if ($data['machine']->time_uom == 'Hr') {
-                                    if ($duration == 0) {
+                                if($data['machine']->time_uom == 'Hr') {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = (($records[$i]->length - $oldLength) / $duration) * 60;
                                     }
-                                } elseif ($data['machine']->time_uom == 'Min') {
-                                    if ($duration == 0) {
+                                } elseif($data['machine']->time_uom == 'Min') {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = ($records[$i]->length - $oldLength) / $duration;
                                     }
                                 } else {
-                                    if ($duration == 0) {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = (($records[$i]->length - $oldLength) / $duration) / 60;
                                     }
                                 }
-                                foreach ($runningCodes as $runningCode) {
-                                    if ($runningCode->id == $records[$i]->error_id) {
+                                foreach($runningCodes as $runningCode) {
+                                    if($runningCode->id == $records[$i]->error_id) {
                                         $runTime += $duration;
                                         $production += $records[$i]->length - $oldLength;
                                         $jobProduction += $records[$i]->length - $oldLength;
                                     }
                                 }
-                                foreach ($idleErrors as $idleError) {
-                                    if ($idleError->id == $records[$i]->error_id) {
+                                foreach($idleErrors as $idleError) {
+                                    if($idleError->id == $records[$i]->error_id) {
                                         $idleTime += $duration;
                                     }
                                 }
-                                foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                    if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                foreach($jobWaitingCodes as $jobWaitingCode) {
+                                    if($jobWaitingCode->id == $records[$i]->error_id) {
                                         $jobWaitTime += $duration;
                                     }
                                 }
-                                if ($duration <= $loginRecord[0]->machine->auto_downtime && $records[$i]->error_id == 500) {
-                                    if ($records[$i]->length - $oldLength < 0) {
+                                if($duration <= $loginRecord[0]->machine->auto_downtime && $records[$i]->error_id == 500) {
+                                    if($records[$i]->length - $oldLength < 0) {
                                         array_push($data['negativeRecords'], [
                                             "startDate" => $startDate,
                                             "endDate" => $endDate,
@@ -2926,7 +2922,7 @@ class ReportsController extends Controller
                                     $startDate = $endDate;
                                     $oldLength = $records[$i]->length;
                                 } else {
-                                    if ($records[$i]->length - $oldLength < 0) {
+                                    if($records[$i]->length - $oldLength < 0) {
                                         array_push($data['negativeRecords'], [
                                             "startDate" => $startDate,
                                             "endDate" => $endDate,
@@ -2961,23 +2957,23 @@ class ReportsController extends Controller
                                 }
                             }
                         }
-                        for ($k = 0; $k < count($data['records']); $k++) {
-                            if ($jobRunTime == 0) {
+                        for($k = 0; $k < count($data['records']); $k++) {
+                            if($jobRunTime == 0) {
                                 $jobPerformance = 0;
                                 $jobAverageSpeed = 0;
                             } else {
-                                if ($data['machine']->time_uom == 'Min') {
+                                if($data['machine']->time_uom == 'Min') {
                                     $jobPerformance = (($jobProduction / $jobRunTime) / $data['machine']->max_speed) * 100;
                                     $jobAverageSpeed = $jobProduction / $jobRunTime;
-                                } elseif ($data['machine']->time_uom == 'Hr') {
+                                } elseif($data['machine']->time_uom == 'Hr') {
                                     $jobPerformance = (($jobProduction / $jobRunTime) * 60 / $data['machine']->max_speed) * 100;
                                     $jobAverageSpeed = ($jobProduction / $jobRunTime) * 60;
-                                } elseif ($data['machine']->time_uom == 'Sec') {
+                                } elseif($data['machine']->time_uom == 'Sec') {
                                     $jobPerformance = ((($jobProduction / $jobRunTime) / 60) / $data['machine']->max_speed) * 100;
                                     $jobAverageSpeed = (($jobProduction / $jobRunTime) / 60);
                                 }
                             }
-                            if (!isset($data['records'][$k][0]['jobProduction']) || !isset($data['records'][$k][0]['jobPerformance'])) {
+                            if(!isset($data['records'][$k][0]['jobProduction']) || !isset($data['records'][$k][0]['jobPerformance'])) {
                                 array_push($data['records'][$k], [
                                     "jobProduction" => $jobProduction,
                                     "jobPerformance" => $jobPerformance,
@@ -2986,10 +2982,10 @@ class ReportsController extends Controller
                                 ]);
                             }
                         }
-                        if ($runTime > 0) {
-                            if ($data['machine']->time_uom == 'Hr') {
+                        if($runTime > 0) {
+                            if($data['machine']->time_uom == 'Hr') {
                                 $actualSpeed = $production / $runTime * 60;
-                            } elseif ($data['machine']->time_uom == 'Min') {
+                            } elseif($data['machine']->time_uom == 'Min') {
                                 $actualSpeed = $production / $runTime;
                             } else {
                                 $actualSpeed = $production / $runTime / 60;
@@ -3000,7 +2996,7 @@ class ReportsController extends Controller
                     }
                     //echo '<pre>';
                     //print_r($data['records']);
-                    if (Session::get('rights') == 0) {
+                    if(Session::get('rights') == 0) {
                         $data['user'] = Users::find($loginRecord[0]->user_id);
                     } else {
                         $data['user'] = Users::find(Session::get('user_name'));
@@ -3017,7 +3013,7 @@ class ReportsController extends Controller
                     $data['shift'] = $request->input('shiftSelection');
                     $data['date'] = $date;
 
-                    if (count($data['negativeRecords']) > 0) {
+                    if(count($data['negativeRecords']) > 0) {
 
                         Mail::send('emails.negative-meters', $data, function ($message) use ($data) {
                             $message->from('systems.services@packages.com.pk', 'RotoEye Cloud');
@@ -3043,24 +3039,24 @@ class ReportsController extends Controller
                     return Redirect::back();
                 }
 
-            } elseif ($request->input('reportType') == 'shift-production-report-raw-old') {
+            } elseif($request->input('reportType') == 'shift-production-report-raw-old') {
                 $shiftSelection = $request->input('shiftSelection');
-                if ($shiftSelection[0] == 'All-Day') {
+                if($shiftSelection[0] == 'All-Day') {
                     $from_date = $request->input('date');
                     $to_date = $request->input('to_date');
 
                     $data['from'] = $from_date;
                     $data['to'] = $to_date;
 
-                    $startDateTime = date('Y-m-d H:i:s', strtotime($from_date . ' + 390 minutes'));
-                    $endDateTime = date('Y-m-d H:i:s', strtotime($to_date . ' + 1830 minutes'));
+                    $startDateTime = date('Y-m-d H:i:s', strtotime($from_date.' + 390 minutes'));
+                    $endDateTime = date('Y-m-d H:i:s', strtotime($to_date.' + 1830 minutes'));
                 } else {
 
                     $minStarted = Shift::find($shiftSelection[0])->min_started;
                     $minEnded = Shift::find($shiftSelection[count($shiftSelection) - 1])->min_ended;
 
-                    $startDateTime = date('Y-m-d H:i:s', strtotime($date . ' + ' . $minStarted . ' minutes'));
-                    $endDateTime = date('Y-m-d H:i:s', strtotime($date . ' + ' . $minEnded . ' minutes'));
+                    $startDateTime = date('Y-m-d H:i:s', strtotime($date.' + '.$minStarted.' minutes'));
+                    $endDateTime = date('Y-m-d H:i:s', strtotime($date.' + '.$minEnded.' minutes'));
                 }
 
                 $data['machine'] = Machine::find($machine_id);
@@ -3070,7 +3066,7 @@ class ReportsController extends Controller
                 $runningCodes = Error::select('id')->where('category', '=', 'Running')->get();
                 $jobWaitingCodes = Error::select('id')->where('category', '=', 'Job Waiting')->get();
 
-                if (date('Y-m-d H:i:s') < $endDateTime) {
+                if(date('Y-m-d H:i:s') < $endDateTime) {
                     $endDateTime = date('Y-m-d H:i:s');
                 }
 
@@ -3108,7 +3104,7 @@ class ReportsController extends Controller
                     ->orderby('run_date_time', 'ASC')
                     ->get();
 
-                if (count($records) > 0) {
+                if(count($records) > 0) {
                     $data['records'] = [];
                     $data['negativeRecords'] = [];
                     $startDate = $records[0]->run_date_time;
@@ -3123,52 +3119,52 @@ class ReportsController extends Controller
 
                     $totalTimeDifference = date_diff(date_create($startDateTime), date_create($endDateTime));
                     $totalTime = (($totalTimeDifference->y * 365 + $totalTimeDifference->m * 30 + $totalTimeDifference->d) * 24 + $totalTimeDifference->h) * 60 + $totalTimeDifference->i + $totalTimeDifference->s / 60;
-                    if (count($records) > 1) {
-                        for ($i = 0; $i < count($records); $i++) {
-                            if (isset($records[$i + 1])) {
-                                if ($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
+                    if(count($records) > 1) {
+                        for($i = 0; $i < count($records); $i++) {
+                            if(isset($records[$i + 1])) {
+                                if($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
                                     $endDate = $records[$i]->run_date_time;
                                     $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                     $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                                    if ($data['machine']->time_uom == 'Hr') {
-                                        if ($duration == 0) {
+                                    if($data['machine']->time_uom == 'Hr') {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = (($records[$i]->length - $oldLength) / $duration) * 60;
                                         }
-                                    } elseif ($data['machine']->time_uom == 'Min') {
-                                        if ($duration == 0) {
+                                    } elseif($data['machine']->time_uom == 'Min') {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = ($records[$i]->length - $oldLength) / $duration;
                                         }
                                     } else {
-                                        if ($duration == 0) {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = (($records[$i]->length - $oldLength) / $duration) / 60;
                                         }
                                     }
-                                    foreach ($runningCodes as $runningCode) {
-                                        if ($runningCode->id == $records[$i]->error_id) {
+                                    foreach($runningCodes as $runningCode) {
+                                        if($runningCode->id == $records[$i]->error_id) {
                                             $runTime += $duration;
                                             $jobRunTime += $duration;
                                             $production += $records[$i]->length - $oldLength;
                                             $jobProduction += $records[$i]->length - $oldLength;
                                         }
                                     }
-                                    foreach ($idleErrors as $idleError) {
-                                        if ($idleError->id == $records[$i]->error_id) {
+                                    foreach($idleErrors as $idleError) {
+                                        if($idleError->id == $records[$i]->error_id) {
                                             $idleTime += $duration;
                                         }
                                     }
-                                    foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                        if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                    foreach($jobWaitingCodes as $jobWaitingCode) {
+                                        if($jobWaitingCode->id == $records[$i]->error_id) {
                                             $jobWaitTime += $duration;
                                         }
                                     }
-                                    if ($duration <= $loginRecord[0]->machine->auto_downtime && $records[$i]->error_id == 500) {
-                                        if ($records[$i]->length - $oldLength < 0) {
+                                    if($duration <= $loginRecord[0]->machine->auto_downtime && $records[$i]->error_id == 500) {
+                                        if($records[$i]->length - $oldLength < 0) {
                                             array_push($data['negativeRecords'], [
                                                 "startDate" => $startDate,
                                                 "endDate" => $endDate,
@@ -3197,15 +3193,15 @@ class ReportsController extends Controller
                                             "process_name" => $records[$i]->process_name,
                                         ]);
                                         $startDate = $endDate;
-                                        if ($records[$i]->job_id != $records[$i + 1]->job_id) {
+                                        if($records[$i]->job_id != $records[$i + 1]->job_id) {
                                             $oldLength = $records[$i + 1]->length;
                                             $jobProduction = $production;
-                                            if ($jobRunTime == 0) {
+                                            if($jobRunTime == 0) {
                                                 $jobPerformance = 0;
                                             } else {
                                                 $jobPerformance = (($jobProduction / $jobRunTime) / $data['machine']->max_speed) * 100;
                                             }
-                                            foreach ($data['records'] as $record) {
+                                            foreach($data['records'] as $record) {
                                                 array_push($record, [
                                                     "jobProduction" => $jobProduction,
                                                     "jobPerformance" => $jobPerformance,
@@ -3218,7 +3214,7 @@ class ReportsController extends Controller
                                             $oldLength = $records[$i]->length;
                                         }
                                     } else {
-                                        if ($records[$i]->length - $oldLength < 0) {
+                                        if($records[$i]->length - $oldLength < 0) {
                                             array_push($data['negativeRecords'], [
                                                 "startDate" => $startDate,
                                                 "endDate" => $endDate,
@@ -3247,24 +3243,24 @@ class ReportsController extends Controller
                                             "process_name" => $records[$i]->process_name,
                                         ]);
                                         $startDate = $endDate;
-                                        if ($records[$i]->job_id != $records[$i + 1]->job_id) {
+                                        if($records[$i]->job_id != $records[$i + 1]->job_id) {
                                             $oldLength = $records[$i + 1]->length;
-                                            if ($jobRunTime == 0) {
+                                            if($jobRunTime == 0) {
                                                 $jobPerformance = 0;
                                                 $jobAverageSpeed = 0;
                                             } else {
-                                                if ($data['machine']->time_uom == 'Min') {
+                                                if($data['machine']->time_uom == 'Min') {
                                                     $jobPerformance = (($jobProduction / $jobRunTime) / $data['machine']->max_speed) * 100;
                                                     $jobAverageSpeed = $jobProduction / $jobRunTime;
-                                                } elseif ($data['machine']->time_uom == 'Hr') {
+                                                } elseif($data['machine']->time_uom == 'Hr') {
                                                     $jobPerformance = (($jobProduction / $jobRunTime) * 60 / $data['machine']->max_speed) * 100;
                                                     $jobAverageSpeed = ($jobProduction / $jobRunTime) * 60;
-                                                } elseif ($data['machine']->time_uom == 'Sec') {
+                                                } elseif($data['machine']->time_uom == 'Sec') {
                                                     $jobPerformance = ((($jobProduction / $jobRunTime) / 60) / $data['machine']->max_speed) * 100;
                                                     $jobAverageSpeed = (($jobProduction / $jobRunTime) / 60);
                                                 }
                                             }
-                                            for ($j = 0; $j < count($data['records']); $j++) {
+                                            for($j = 0; $j < count($data['records']); $j++) {
                                                 array_push($data['records'][$j], [
                                                     "jobProduction" => $jobProduction,
                                                     "jobPerformance" => $jobPerformance,
@@ -3283,44 +3279,44 @@ class ReportsController extends Controller
                                 $endDate = $records[$i]->run_date_time;
                                 $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                 $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                                if ($data['machine']->time_uom == 'Hr') {
-                                    if ($duration == 0) {
+                                if($data['machine']->time_uom == 'Hr') {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = (($records[$i]->length - $oldLength) / $duration) * 60;
                                     }
-                                } elseif ($data['machine']->time_uom == 'Min') {
-                                    if ($duration == 0) {
+                                } elseif($data['machine']->time_uom == 'Min') {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = ($records[$i]->length - $oldLength) / $duration;
                                     }
                                 } else {
-                                    if ($duration == 0) {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = (($records[$i]->length - $oldLength) / $duration) / 60;
                                     }
                                 }
-                                foreach ($runningCodes as $runningCode) {
-                                    if ($runningCode->id == $records[$i]->error_id) {
+                                foreach($runningCodes as $runningCode) {
+                                    if($runningCode->id == $records[$i]->error_id) {
                                         $runTime += $duration;
                                         $production += $records[$i]->length - $oldLength;
                                         $jobProduction += $records[$i]->length - $oldLength;
                                     }
                                 }
-                                foreach ($idleErrors as $idleError) {
-                                    if ($idleError->id == $records[$i]->error_id) {
+                                foreach($idleErrors as $idleError) {
+                                    if($idleError->id == $records[$i]->error_id) {
                                         $idleTime += $duration;
                                     }
                                 }
-                                foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                    if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                foreach($jobWaitingCodes as $jobWaitingCode) {
+                                    if($jobWaitingCode->id == $records[$i]->error_id) {
                                         $jobWaitTime += $duration;
                                     }
                                 }
-                                if ($duration <= $loginRecord[0]->machine->auto_downtime && $records[$i]->error_id == 500) {
-                                    if ($records[$i]->length - $oldLength < 0) {
+                                if($duration <= $loginRecord[0]->machine->auto_downtime && $records[$i]->error_id == 500) {
+                                    if($records[$i]->length - $oldLength < 0) {
                                         array_push($data['negativeRecords'], [
                                             "startDate" => $startDate,
                                             "endDate" => $endDate,
@@ -3352,7 +3348,7 @@ class ReportsController extends Controller
                                     $startDate = $endDate;
                                     $oldLength = $records[$i]->length;
                                 } else {
-                                    if ($records[$i]->length - $oldLength < 0) {
+                                    if($records[$i]->length - $oldLength < 0) {
                                         array_push($data['negativeRecords'], [
                                             "startDate" => $startDate,
                                             "endDate" => $endDate,
@@ -3386,23 +3382,23 @@ class ReportsController extends Controller
                                 }
                             }
                         }
-                        for ($k = 0; $k < count($data['records']); $k++) {
-                            if ($jobRunTime == 0) {
+                        for($k = 0; $k < count($data['records']); $k++) {
+                            if($jobRunTime == 0) {
                                 $jobPerformance = 0;
                                 $jobAverageSpeed = 0;
                             } else {
-                                if ($data['machine']->time_uom == 'Min') {
+                                if($data['machine']->time_uom == 'Min') {
                                     $jobPerformance = (($jobProduction / $jobRunTime) / $data['machine']->max_speed) * 100;
                                     $jobAverageSpeed = $jobProduction / $jobRunTime;
-                                } elseif ($data['machine']->time_uom == 'Hr') {
+                                } elseif($data['machine']->time_uom == 'Hr') {
                                     $jobPerformance = (($jobProduction / $jobRunTime) * 60 / $data['machine']->max_speed) * 100;
                                     $jobAverageSpeed = ($jobProduction / $jobRunTime) * 60;
-                                } elseif ($data['machine']->time_uom == 'Sec') {
+                                } elseif($data['machine']->time_uom == 'Sec') {
                                     $jobPerformance = ((($jobProduction / $jobRunTime) / 60) / $data['machine']->max_speed) * 100;
                                     $jobAverageSpeed = (($jobProduction / $jobRunTime) / 60);
                                 }
                             }
-                            if (!isset($data['records'][$k][0]['jobProduction']) || !isset($data['records'][$k][0]['jobPerformance'])) {
+                            if(!isset($data['records'][$k][0]['jobProduction']) || !isset($data['records'][$k][0]['jobPerformance'])) {
                                 array_push($data['records'][$k], [
                                     "jobProduction" => $jobProduction,
                                     "jobPerformance" => $jobPerformance,
@@ -3411,10 +3407,10 @@ class ReportsController extends Controller
                                 ]);
                             }
                         }
-                        if ($runTime > 0) {
-                            if ($data['machine']->time_uom == 'Hr') {
+                        if($runTime > 0) {
+                            if($data['machine']->time_uom == 'Hr') {
                                 $actualSpeed = $production / $runTime * 60;
-                            } elseif ($data['machine']->time_uom == 'Min') {
+                            } elseif($data['machine']->time_uom == 'Min') {
                                 $actualSpeed = $production / $runTime;
                             } else {
                                 $actualSpeed = $production / $runTime / 60;
@@ -3425,7 +3421,7 @@ class ReportsController extends Controller
                     }
                     //echo '<pre>';
                     //print_r($data['records']);
-                    if (Session::get('rights') == 0 || Session::get('rights') == 3) {
+                    if(Session::get('rights') == 0 || Session::get('rights') == 3) {
                         $data['user'] = Users::find($loginRecord[0]->user_id);
                     } else {
                         $data['user'] = Users::find(Session::get('user_name'));
@@ -3442,7 +3438,7 @@ class ReportsController extends Controller
                     $data['shift'] = $request->input('shiftSelection');
                     $data['date'] = $date;
 
-                    if (count($data['negativeRecords']) > 0) {
+                    if(count($data['negativeRecords']) > 0) {
 
                         Mail::send('emails.negative-meters', $data, function ($message) use ($data) {
                             $message->from('systems.services@packages.com.pk', 'RotoEye Cloud');
@@ -3468,15 +3464,15 @@ class ReportsController extends Controller
                 }
             }
             //Shift Production Report Summarized
-            elseif ($request->input('reportType') == 'shift-production-report-summarized') {
+            elseif($request->input('reportType') == 'shift-production-report-summarized') {
                 $shiftSelection = $request->input('shiftSelection');
 
                 //dd($data);
-                if ($shiftSelection[0] == 'All-Day') {
+                if($shiftSelection[0] == 'All-Day') {
                     //haseeb 6/3/2021
                     $machine = Machine::find($machine_id);
                     $shifts_id = [];
-                    foreach ($machine->section->department->businessUnit->company->shifts as $shift) {
+                    foreach($machine->section->department->businessUnit->company->shifts as $shift) {
                         array_push($shifts_id, $shift->id);
                     }
 
@@ -3491,8 +3487,8 @@ class ReportsController extends Controller
                     $data['to'] = $to_date;
 
                     //haseeb 6/3/2021
-                    $startDateTime = date('Y-m-d H:i:s', strtotime($data['from'] . ' + ' . $minStarted . ' minutes'));
-                    $endDateTime = date('Y-m-d H:i:s', strtotime($data['to'] . ' + ' . $minEnded . ' minutes'));
+                    $startDateTime = date('Y-m-d H:i:s', strtotime($data['from'].' + '.$minStarted.' minutes'));
+                    $endDateTime = date('Y-m-d H:i:s', strtotime($data['to'].' + '.$minEnded.' minutes'));
 
                     //$startDateTime = date('Y-m-d H:i:s', strtotime($from_date.' + 390 minutes'));
                     //$endDateTime = date('Y-m-d H:i:s', strtotime($to_date.' + 1830 minutes'));
@@ -3502,8 +3498,8 @@ class ReportsController extends Controller
                     $minStarted = Shift::find($shiftSelection[0])->min_started;
                     $minEnded = Shift::find($shiftSelection[count($shiftSelection) - 1])->min_ended;
 
-                    $startDateTime = date('Y-m-d H:i:s', strtotime($date . ' + ' . $minStarted . ' minutes'));
-                    $endDateTime = date('Y-m-d H:i:s', strtotime($date . ' + ' . $minEnded . ' minutes'));
+                    $startDateTime = date('Y-m-d H:i:s', strtotime($date.' + '.$minStarted.' minutes'));
+                    $endDateTime = date('Y-m-d H:i:s', strtotime($date.' + '.$minEnded.' minutes'));
                     $data['from'] = $date;
                     $data['to'] = $date;
                 }
@@ -3515,7 +3511,7 @@ class ReportsController extends Controller
                 $runningCodes = Error::select('id')->where('category', '=', 'Running')->get();
                 $jobWaitingCodes = Error::select('id')->where('category', '=', 'Job Waiting')->get();
 
-                if (date('Y-m-d H:i:s') < $endDateTime) {
+                if(date('Y-m-d H:i:s') < $endDateTime) {
                     $endDateTime = date('Y-m-d H:i:s');
                 }
                 /*$records = DB::table('records')
@@ -3566,7 +3562,7 @@ class ReportsController extends Controller
                     ->where('records.run_date_time', '<=', $endDateTime)
                     ->orderby('run_date_time', 'ASC')
                     ->get();
-                if (count($records) > 0) {
+                if(count($records) > 0) {
                     $data['records'] = [];
                     $data['negativeRecords'] = [];
                     $startDate = $records[0]->run_date_time;
@@ -3581,52 +3577,52 @@ class ReportsController extends Controller
 
                     $totalTime = (strtotime($endDateTime) - strtotime($startDateTime)) / 60;
 
-                    if (count($records) > 1) {
-                        for ($i = 0; $i < count($records); $i++) {
-                            if (isset($records[$i + 1])) {
-                                if ($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
+                    if(count($records) > 1) {
+                        for($i = 0; $i < count($records); $i++) {
+                            if(isset($records[$i + 1])) {
+                                if($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
                                     $endDate = $records[$i]->run_date_time;
                                     $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                     $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                                    if ($data['machine']->time_uom == 'Hr') {
-                                        if ($duration == 0) {
+                                    if($data['machine']->time_uom == 'Hr') {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = (($records[$i]->length - $oldLength) / $duration) * 60;
                                         }
-                                    } elseif ($data['machine']->time_uom == 'Min') {
-                                        if ($duration == 0) {
+                                    } elseif($data['machine']->time_uom == 'Min') {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = ($records[$i]->length - $oldLength) / $duration;
                                         }
                                     } else {
-                                        if ($duration == 0) {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = (($records[$i]->length - $oldLength) / $duration) / 60;
                                         }
                                     }
-                                    foreach ($runningCodes as $runningCode) {
-                                        if ($runningCode->id == $records[$i]->error_id) {
+                                    foreach($runningCodes as $runningCode) {
+                                        if($runningCode->id == $records[$i]->error_id) {
                                             $runTime += $duration;
                                             $jobRunTime += $duration;
                                             $production += $records[$i]->length - $oldLength;
                                             $jobProduction += $records[$i]->length - $oldLength;
                                         }
                                     }
-                                    foreach ($idleErrors as $idleError) {
-                                        if ($idleError->id == $records[$i]->error_id) {
+                                    foreach($idleErrors as $idleError) {
+                                        if($idleError->id == $records[$i]->error_id) {
                                             $idleTime += $duration;
                                         }
                                     }
-                                    foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                        if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                    foreach($jobWaitingCodes as $jobWaitingCode) {
+                                        if($jobWaitingCode->id == $records[$i]->error_id) {
                                             $jobWaitTime += $duration;
                                         }
                                     }
-                                    if ($duration <= $loginRecord[0]->machine->auto_downtime && $records[$i]->error_id == 500 && false) {
-                                        if ($records[$i]->length - $oldLength < 0) {
+                                    if($duration <= $loginRecord[0]->machine->auto_downtime && $records[$i]->error_id == 500 && false) {
+                                        if($records[$i]->length - $oldLength < 0) {
                                             array_push($data['negativeRecords'], [
                                                 "startDate" => $startDate,
                                                 "endDate" => $endDate,
@@ -3656,15 +3652,15 @@ class ReportsController extends Controller
                                             "process_name" => $records[$i]->process_name,
                                         ]);
                                         $startDate = $endDate;
-                                        if ($records[$i]->job_id != $records[$i + 1]->job_id) {
+                                        if($records[$i]->job_id != $records[$i + 1]->job_id) {
                                             $oldLength = $records[$i + 1]->length;
                                             $jobProduction = $production;
-                                            if ($jobRunTime == 0) {
+                                            if($jobRunTime == 0) {
                                                 $jobPerformance = 0;
                                             } else {
                                                 $jobPerformance = (($jobProduction / $jobRunTime) / $data['machine']->max_speed) * 100;
                                             }
-                                            foreach ($data['records'] as $record) {
+                                            foreach($data['records'] as $record) {
                                                 array_push($record, [
                                                     "jobProduction" => $jobProduction,
                                                     "jobPerformance" => $jobPerformance,
@@ -3677,7 +3673,7 @@ class ReportsController extends Controller
                                             $oldLength = $records[$i]->length;
                                         }
                                     } else {
-                                        if ($records[$i]->length - $oldLength < 0) {
+                                        if($records[$i]->length - $oldLength < 0) {
                                             array_push($data['negativeRecords'], [
                                                 "startDate" => $startDate,
                                                 "endDate" => $endDate,
@@ -3707,14 +3703,14 @@ class ReportsController extends Controller
                                             "process_name" => $records[$i]->process_name,
                                         ]);
                                         $startDate = $endDate;
-                                        if ($records[$i]->job_id != $records[$i + 1]->job_id) {
+                                        if($records[$i]->job_id != $records[$i + 1]->job_id) {
                                             $oldLength = $records[$i + 1]->length;
-                                            if ($jobRunTime == 0) {
+                                            if($jobRunTime == 0) {
                                                 $jobPerformance = 0;
                                             } else {
                                                 $jobPerformance = (($jobProduction / $jobRunTime) / $data['machine']->max_speed) * 100;
                                             }
-                                            for ($j = 0; $j < count($data['records']); $j++) {
+                                            for($j = 0; $j < count($data['records']); $j++) {
                                                 array_push($data['records'][$j], [
                                                     "jobProduction" => $jobProduction,
                                                     "jobPerformance" => $jobPerformance,
@@ -3732,44 +3728,44 @@ class ReportsController extends Controller
                                 $endDate = $records[$i]->run_date_time;
                                 $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                 $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                                if ($data['machine']->time_uom == 'Hr') {
-                                    if ($duration == 0) {
+                                if($data['machine']->time_uom == 'Hr') {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = (($records[$i]->length - $oldLength) / $duration) * 60;
                                     }
-                                } elseif ($data['machine']->time_uom == 'Min') {
-                                    if ($duration == 0) {
+                                } elseif($data['machine']->time_uom == 'Min') {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = ($records[$i]->length - $oldLength) / $duration;
                                     }
                                 } else {
-                                    if ($duration == 0) {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = (($records[$i]->length - $oldLength) / $duration) / 60;
                                     }
                                 }
-                                foreach ($runningCodes as $runningCode) {
-                                    if ($runningCode->id == $records[$i]->error_id) {
+                                foreach($runningCodes as $runningCode) {
+                                    if($runningCode->id == $records[$i]->error_id) {
                                         $runTime += $duration;
                                         $production += $records[$i]->length - $oldLength;
                                         $jobProduction += $records[$i]->length - $oldLength;
                                     }
                                 }
-                                foreach ($idleErrors as $idleError) {
-                                    if ($idleError->id == $records[$i]->error_id) {
+                                foreach($idleErrors as $idleError) {
+                                    if($idleError->id == $records[$i]->error_id) {
                                         $idleTime += $duration;
                                     }
                                 }
-                                foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                    if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                foreach($jobWaitingCodes as $jobWaitingCode) {
+                                    if($jobWaitingCode->id == $records[$i]->error_id) {
                                         $jobWaitTime += $duration;
                                     }
                                 }
-                                if ($duration <= $loginRecord[0]->machine->auto_downtime && $records[$i]->error_id == 500) {
-                                    if ($records[$i]->length - $oldLength < 0) {
+                                if($duration <= $loginRecord[0]->machine->auto_downtime && $records[$i]->error_id == 500) {
+                                    if($records[$i]->length - $oldLength < 0) {
                                         array_push($data['negativeRecords'], [
                                             "startDate" => $startDate,
                                             "endDate" => $endDate,
@@ -3802,7 +3798,7 @@ class ReportsController extends Controller
                                     $startDate = $endDate;
                                     $oldLength = $records[$i]->length;
                                 } else {
-                                    if ($records[$i]->length - $oldLength < 0) {
+                                    if($records[$i]->length - $oldLength < 0) {
                                         array_push($data['negativeRecords'], [
                                             "startDate" => $startDate,
                                             "endDate" => $endDate,
@@ -3837,13 +3833,13 @@ class ReportsController extends Controller
                                 }
                             }
                         }
-                        for ($k = 0; $k < count($data['records']); $k++) {
-                            if ($jobRunTime == 0) {
+                        for($k = 0; $k < count($data['records']); $k++) {
+                            if($jobRunTime == 0) {
                                 $jobPerformance = 0;
                             } else {
                                 $jobPerformance = (($jobProduction / $jobRunTime) / $data['machine']->max_speed) * 100;
                             }
-                            if (!isset($data['records'][$k][0]['jobProduction']) || !isset($data['records'][$k][0]['jobPerformance'])) {
+                            if(!isset($data['records'][$k][0]['jobProduction']) || !isset($data['records'][$k][0]['jobPerformance'])) {
                                 array_push($data['records'][$k], [
                                     "jobProduction" => $jobProduction,
                                     "jobPerformance" => $jobPerformance,
@@ -3851,10 +3847,10 @@ class ReportsController extends Controller
                                 ]);
                             }
                         }
-                        if ($runTime > 0) {
-                            if ($data['machine']->time_uom == 'Hr') {
+                        if($runTime > 0) {
+                            if($data['machine']->time_uom == 'Hr') {
                                 $actualSpeed = $production / $runTime * 60;
-                            } elseif ($data['machine']->time_uom == 'Min') {
+                            } elseif($data['machine']->time_uom == 'Min') {
                                 $actualSpeed = $production / $runTime;
                             } else {
                                 $actualSpeed = $production / $runTime / 60;
@@ -3865,7 +3861,7 @@ class ReportsController extends Controller
                     }
                     //echo '<pre>';
                     //print_r($data['records']);
-                    if (Session::get('rights') == 0 || Session::get('rights') == 3) {
+                    if(Session::get('rights') == 0 || Session::get('rights') == 3) {
                         $data['user'] = Users::find($loginRecord[0]->user_id);
                     } else {
                         $data['user'] = Users::find(Session::get('user_name'));
@@ -3891,7 +3887,7 @@ class ReportsController extends Controller
                     $data['shift'] = $request->input('shiftSelection');
                     $data['date'] = $date;
                     $data['current_time'] = date('Y-m-d H:i:s');
-                    if (count($data['negativeRecords']) > 0) {
+                    if(count($data['negativeRecords']) > 0) {
                         /* Mail::send('emails.negative-meters', $data, function ($message) use ($data) {
                              $message->from('systems.services@packages.com.pk', 'RotoEye Cloud');
                              $message->to('ameer.hamza@packages.com.pk', 'Ameer Hamza')
@@ -3915,16 +3911,16 @@ class ReportsController extends Controller
                 }
             }
             //Operator Wise OEE Report (Shift Wise and Duration Wise)
-            elseif ($request->input('reportType') == 'operator-wise-oee') {
+            elseif($request->input('reportType') == 'operator-wise-oee') {
                 $shiftSelection = $request->input('shiftSelection');
                 $operatorID = $request->input('operator');
                 $data['budgetedTime'] = 0;
 
-                if ($shiftSelection[0] == 'All-Day') {
+                if($shiftSelection[0] == 'All-Day') {
                     //haseeb 6/3/2021
                     $machine = Machine::find($machine_id);
                     $shifts_id = [];
-                    foreach ($machine->section->department->businessUnit->company->shifts as $shift) {
+                    foreach($machine->section->department->businessUnit->company->shifts as $shift) {
                         array_push($shifts_id, $shift->id);
                     }
 
@@ -3939,8 +3935,8 @@ class ReportsController extends Controller
                     $data['to'] = $to_date;
 
                     //haseeb 6/3/2021
-                    $startDateTime = date('Y-m-d H:i:s', strtotime($data['from'] . ' + ' . $minStarted . ' minutes'));
-                    $endDateTime = date('Y-m-d H:i:s', strtotime($data['to'] . ' + ' . $minEnded . ' minutes'));
+                    $startDateTime = date('Y-m-d H:i:s', strtotime($data['from'].' + '.$minStarted.' minutes'));
+                    $endDateTime = date('Y-m-d H:i:s', strtotime($data['to'].' + '.$minEnded.' minutes'));
 
                     //$startDateTime = date('Y-m-d H:i:s', strtotime($from_date.' + 390 minutes'));
                     //$endDateTime = date('Y-m-d H:i:s', strtotime($to_date.' + 1830 minutes'));
@@ -3950,8 +3946,8 @@ class ReportsController extends Controller
                     $minStarted = Shift::find($shiftSelection[0])->min_started;
                     $minEnded = Shift::find($shiftSelection[count($shiftSelection) - 1])->min_ended;
 
-                    $startDateTime = date('Y-m-d H:i:s', strtotime($date . ' + ' . $minStarted . ' minutes'));
-                    $endDateTime = date('Y-m-d H:i:s', strtotime($date . ' + ' . $minEnded . ' minutes'));
+                    $startDateTime = date('Y-m-d H:i:s', strtotime($date.' + '.$minStarted.' minutes'));
+                    $endDateTime = date('Y-m-d H:i:s', strtotime($date.' + '.$minEnded.' minutes'));
                 }
 
                 $data['machine'] = Machine::find($machine_id);
@@ -3961,7 +3957,7 @@ class ReportsController extends Controller
                 $runningCodes = Error::select('id')->where('category', '=', 'Running')->get();
                 $jobWaitingCodes = Error::select('id')->where('category', '=', 'Job Waiting')->get();
 
-                if (date('Y-m-d H:i:s') < $endDateTime) {
+                if(date('Y-m-d H:i:s') < $endDateTime) {
                     $endDateTime = date('Y-m-d H:i:s');
                 }
 
@@ -3997,8 +3993,8 @@ class ReportsController extends Controller
                     ->orderby('run_date_time', 'ASC')
                     ->get();
                 ;
-                if (count($records) > 0) {
-                    if (in_array($operatorID, array_column($records->toArray(), 'user_id'))) {
+                if(count($records) > 0) {
+                    if(in_array($operatorID, array_column($records->toArray(), 'user_id'))) {
                         $data['records'] = [];
                         $startDate = $records[0]->run_date_time;
                         $oldLength = $records[0]->length;
@@ -4010,50 +4006,50 @@ class ReportsController extends Controller
                         $jobProduction = 0;
                         $totalTimeDifference = date_diff(date_create($startDateTime), date_create($endDateTime));
                         $totalTime = (($totalTimeDifference->y * 365 + $totalTimeDifference->m * 30 + $totalTimeDifference->d) * 24 + $totalTimeDifference->h) * 60 + $totalTimeDifference->i + $totalTimeDifference->s / 60;
-                        if (count($records) > 1) {
-                            for ($i = 0; $i < count($records); $i++) {
-                                if (isset($records[$i + 1])) {
-                                    if ($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id || date('Y-m-d', strtotime($records[$i]->run_date_time)) != date('Y-m-d', strtotime($records[$i + 1]->run_date_time))) {
+                        if(count($records) > 1) {
+                            for($i = 0; $i < count($records); $i++) {
+                                if(isset($records[$i + 1])) {
+                                    if($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id || date('Y-m-d', strtotime($records[$i]->run_date_time)) != date('Y-m-d', strtotime($records[$i + 1]->run_date_time))) {
                                         $endDate = $records[$i]->run_date_time;
                                         $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                         $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
 
-                                        if ($data['machine']->time_uom == 'Hr') {
-                                            if ($duration == 0) {
+                                        if($data['machine']->time_uom == 'Hr') {
+                                            if($duration == 0) {
                                                 $instantSpeed = 0;
                                             } else {
                                                 $instantSpeed = (($records[$i]->length - $oldLength) / $duration) * 60;
                                             }
-                                        } elseif ($data['machine']->time_uom == 'Min') {
-                                            if ($duration == 0) {
+                                        } elseif($data['machine']->time_uom == 'Min') {
+                                            if($duration == 0) {
                                                 $instantSpeed = 0;
                                             } else {
                                                 $instantSpeed = ($records[$i]->length - $oldLength) / $duration;
                                             }
                                         } else {
-                                            if ($duration == 0) {
+                                            if($duration == 0) {
                                                 $instantSpeed = 0;
                                             } else {
                                                 $instantSpeed = (($records[$i]->length - $oldLength) / $duration) / 60;
                                             }
                                         }
-                                        if ($records[$i]->user_id == $operatorID) {
+                                        if($records[$i]->user_id == $operatorID) {
 
                                             $data['budgetedTime'] += $duration;
-                                            foreach ($runningCodes as $runningCode) {
-                                                if ($runningCode->id == $records[$i]->error_id) {
+                                            foreach($runningCodes as $runningCode) {
+                                                if($runningCode->id == $records[$i]->error_id) {
                                                     $runTime += $duration;
                                                     $production += $records[$i]->length - $oldLength;
                                                     $jobProduction += $records[$i]->length - $oldLength;
                                                 }
                                             }
-                                            foreach ($idleErrors as $idleError) {
-                                                if ($idleError->id == $records[$i]->error_id) {
+                                            foreach($idleErrors as $idleError) {
+                                                if($idleError->id == $records[$i]->error_id) {
                                                     $idleTime += $duration;
                                                 }
                                             }
-                                            foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                                if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                            foreach($jobWaitingCodes as $jobWaitingCode) {
+                                                if($jobWaitingCode->id == $records[$i]->error_id) {
                                                     $jobWaitTime += $duration;
                                                 }
                                             }
@@ -4076,9 +4072,9 @@ class ReportsController extends Controller
                                                 "instantSpeed" => $instantSpeed,
                                             ]);
                                         }
-                                        if ($records[$i]->job_id != $records[$i + 1]->job_id) {
+                                        if($records[$i]->job_id != $records[$i + 1]->job_id) {
                                             $oldLength = $records[$i + 1]->length;
-                                            for ($j = 0; $j < count($data['records']); $j++) {
+                                            for($j = 0; $j < count($data['records']); $j++) {
                                                 array_push($data['records'][$j], [
                                                     "jobProduction" => $jobProduction
                                                 ]);
@@ -4095,41 +4091,41 @@ class ReportsController extends Controller
                                     $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                     $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
 
-                                    if ($data['machine']->time_uom == 'Hr') {
-                                        if ($duration == 0) {
+                                    if($data['machine']->time_uom == 'Hr') {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = (($records[$i]->length - $oldLength) / $duration) * 60;
                                         }
-                                    } elseif ($data['machine']->time_uom == 'Min') {
-                                        if ($duration == 0) {
+                                    } elseif($data['machine']->time_uom == 'Min') {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = ($records[$i]->length - $oldLength) / $duration;
                                         }
                                     } else {
-                                        if ($duration == 0) {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = (($records[$i]->length - $oldLength) / $duration) / 60;
                                         }
                                     }
-                                    if ($records[$i]->user_id == $operatorID) {
+                                    if($records[$i]->user_id == $operatorID) {
                                         $data['budgetedTime'] += $duration;
-                                        foreach ($runningCodes as $runningCode) {
-                                            if ($runningCode->id == $records[$i]->error_id) {
+                                        foreach($runningCodes as $runningCode) {
+                                            if($runningCode->id == $records[$i]->error_id) {
                                                 $runTime += $duration;
                                                 $production += $records[$i]->length - $oldLength;
                                                 $jobProduction += $records[$i]->length - $oldLength;
                                             }
                                         }
-                                        foreach ($idleErrors as $idleError) {
-                                            if ($idleError->id == $records[$i]->error_id) {
+                                        foreach($idleErrors as $idleError) {
+                                            if($idleError->id == $records[$i]->error_id) {
                                                 $idleTime += $duration;
                                             }
                                         }
-                                        foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                            if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                        foreach($jobWaitingCodes as $jobWaitingCode) {
+                                            if($jobWaitingCode->id == $records[$i]->error_id) {
                                                 $jobWaitTime += $duration;
                                             }
                                         }
@@ -4158,17 +4154,17 @@ class ReportsController extends Controller
 
                                 }
                             }
-                            for ($k = 0; $k < count($data['records']); $k++) {
-                                if (!isset($data['records'][$k][0]['jobProduction'])) {
+                            for($k = 0; $k < count($data['records']); $k++) {
+                                if(!isset($data['records'][$k][0]['jobProduction'])) {
                                     array_push($data['records'][$k], [
                                         "jobProduction" => $jobProduction
                                     ]);
                                 }
                             }
-                            if ($runTime > 0) {
-                                if ($data['machine']->time_uom == 'Hr') {
+                            if($runTime > 0) {
+                                if($data['machine']->time_uom == 'Hr') {
                                     $actualSpeed = $production / $runTime * 60;
-                                } elseif ($data['machine']->time_uom == 'Min') {
+                                } elseif($data['machine']->time_uom == 'Min') {
                                     $actualSpeed = $production / $runTime;
                                 } else {
                                     $actualSpeed = $production / $runTime / 60;
@@ -4179,7 +4175,7 @@ class ReportsController extends Controller
                         }
                         //echo '<pre>';
                         //print_r($data['records']);
-                        if (Session::get('rights') == 0) {
+                        if(Session::get('rights') == 0) {
                             $data['user'] = Users::find($loginRecord[0]->user_id);
                         } else {
                             $data['user'] = Users::find(Session::get('user_name'));
@@ -4204,16 +4200,16 @@ class ReportsController extends Controller
                     Session::flash("error", "No Record for the selected shift and date. Please try again.");
                     return Redirect::back();
                 }
-            } elseif ($request->input('reportType') == 'job-wise-performance') {
+            } elseif($request->input('reportType') == 'job-wise-performance') {
 
-            } elseif ($request->input('reportType') == 'production-report') {
+            } elseif($request->input('reportType') == 'production-report') {
                 $shiftSelection = $request->input('shiftSelection');
-                if ($shiftSelection[0] == 'All-Day') {
+                if($shiftSelection[0] == 'All-Day') {
                     //haseeb 6/3/2021
                     $machine = Machine::find($machine_id);
 
                     $shifts_id = [];
-                    foreach ($machine->section->department->businessUnit->company->shifts as $shift) {
+                    foreach($machine->section->department->businessUnit->company->shifts as $shift) {
                         array_push($shifts_id, $shift->id);
                     }
 
@@ -4226,14 +4222,14 @@ class ReportsController extends Controller
                     $data['from'] = $from_date;
                     $data['to'] = $to_date;
 
-                    $startDateTime = date('Y-m-d H:i:s', strtotime($data['from'] . ' + ' . $minStarted . ' minutes'));
-                    $endDateTime = date('Y-m-d H:i:s', strtotime($data['to'] . ' + ' . $minEnded . ' minutes'));
+                    $startDateTime = date('Y-m-d H:i:s', strtotime($data['from'].' + '.$minStarted.' minutes'));
+                    $endDateTime = date('Y-m-d H:i:s', strtotime($data['to'].' + '.$minEnded.' minutes'));
                 } else {
                     $minStarted = Shift::find($shiftSelection[0])->min_started;
                     $minEnded = Shift::find($shiftSelection[count($shiftSelection) - 1])->min_ended;
 
-                    $startDateTime = date('Y-m-d H:i:s', strtotime($date . ' + ' . $minStarted . ' minutes'));
-                    $endDateTime = date('Y-m-d H:i:s', strtotime($date . ' + ' . $minEnded . ' minutes'));
+                    $startDateTime = date('Y-m-d H:i:s', strtotime($date.' + '.$minStarted.' minutes'));
+                    $endDateTime = date('Y-m-d H:i:s', strtotime($date.' + '.$minEnded.' minutes'));
                 }
 
                 $data['machine'] = Machine::find($machine_id);
@@ -4243,7 +4239,7 @@ class ReportsController extends Controller
                 $runningCodes = Error::select('id')->where('category', '=', 'Running')->get();
                 $jobWaitingCodes = Error::select('id')->where('category', '=', 'Job Waiting')->get();
 
-                if (date('Y-m-d H:i:s') < $endDateTime) {
+                if(date('Y-m-d H:i:s') < $endDateTime) {
                     $endDateTime = date('Y-m-d H:i:s');
                 }
 
@@ -4280,7 +4276,7 @@ class ReportsController extends Controller
                     ->where('records.run_date_time', '<=', $endDateTime)
                     ->orderby('run_date_time', 'ASC')
                     ->get();
-                if (count($records) > 0) {
+                if(count($records) > 0) {
                     $data['records'] = [];
                     $data['negativeRecords'] = [];
                     $startDate = $records[0]->run_date_time;
@@ -4295,52 +4291,52 @@ class ReportsController extends Controller
 
                     $totalTimeDifference = date_diff(date_create($startDateTime), date_create($endDateTime));
                     $totalTime = (($totalTimeDifference->y * 365 + $totalTimeDifference->m * 30 + $totalTimeDifference->d) * 24 + $totalTimeDifference->h) * 60 + $totalTimeDifference->i + $totalTimeDifference->s / 60;
-                    if (count($records) > 1) {
-                        for ($i = 0; $i < count($records); $i++) {
-                            if (isset($records[$i + 1])) {
-                                if ($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
+                    if(count($records) > 1) {
+                        for($i = 0; $i < count($records); $i++) {
+                            if(isset($records[$i + 1])) {
+                                if($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
                                     $endDate = $records[$i]->run_date_time;
                                     $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                     $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                                    if ($data['machine']->time_uom == 'Hr') {
-                                        if ($duration == 0) {
+                                    if($data['machine']->time_uom == 'Hr') {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = (($records[$i]->length - $oldLength) / $duration) * 60;
                                         }
-                                    } elseif ($data['machine']->time_uom == 'Min') {
-                                        if ($duration == 0) {
+                                    } elseif($data['machine']->time_uom == 'Min') {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = ($records[$i]->length - $oldLength) / $duration;
                                         }
                                     } else {
-                                        if ($duration == 0) {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = (($records[$i]->length - $oldLength) / $duration) / 60;
                                         }
                                     }
-                                    foreach ($runningCodes as $runningCode) {
-                                        if ($runningCode->id == $records[$i]->error_id) {
+                                    foreach($runningCodes as $runningCode) {
+                                        if($runningCode->id == $records[$i]->error_id) {
                                             $runTime += $duration;
                                             $jobRunTime += $duration;
                                             $production += $records[$i]->length - $oldLength;
                                             $jobProduction += $records[$i]->length - $oldLength;
                                         }
                                     }
-                                    foreach ($idleErrors as $idleError) {
-                                        if ($idleError->id == $records[$i]->error_id) {
+                                    foreach($idleErrors as $idleError) {
+                                        if($idleError->id == $records[$i]->error_id) {
                                             $idleTime += $duration;
                                         }
                                     }
-                                    foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                        if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                    foreach($jobWaitingCodes as $jobWaitingCode) {
+                                        if($jobWaitingCode->id == $records[$i]->error_id) {
                                             $jobWaitTime += $duration;
                                         }
                                     }
 
-                                    if ($records[$i]->length - $oldLength < 0) {
+                                    if($records[$i]->length - $oldLength < 0) {
                                         array_push($data['negativeRecords'], [
                                             "startDate" => $startDate,
                                             "endDate" => $endDate,
@@ -4370,24 +4366,24 @@ class ReportsController extends Controller
                                         "process_name" => $records[$i]->process_name,
                                     ]);
                                     $startDate = $endDate;
-                                    if ($records[$i]->job_id != $records[$i + 1]->job_id) {
+                                    if($records[$i]->job_id != $records[$i + 1]->job_id) {
                                         $oldLength = $records[$i + 1]->length;
-                                        if ($jobRunTime == 0) {
+                                        if($jobRunTime == 0) {
                                             $jobPerformance = 0;
                                             $jobAverageSpeed = 0;
                                         } else {
-                                            if ($data['machine']->time_uom == 'Min') {
+                                            if($data['machine']->time_uom == 'Min') {
                                                 $jobPerformance = (($jobProduction / $jobRunTime) / $data['machine']->max_speed) * 100;
                                                 $jobAverageSpeed = $jobProduction / $jobRunTime;
-                                            } elseif ($data['machine']->time_uom == 'Hr') {
+                                            } elseif($data['machine']->time_uom == 'Hr') {
                                                 $jobPerformance = (($jobProduction / $jobRunTime) * 60 / $data['machine']->max_speed) * 100;
                                                 $jobAverageSpeed = ($jobProduction / $jobRunTime) * 60;
-                                            } elseif ($data['machine']->time_uom == 'Sec') {
+                                            } elseif($data['machine']->time_uom == 'Sec') {
                                                 $jobPerformance = ((($jobProduction / $jobRunTime) / 60) / $data['machine']->max_speed) * 100;
                                                 $jobAverageSpeed = (($jobProduction / $jobRunTime) / 60);
                                             }
                                         }
-                                        for ($j = 0; $j < count($data['records']); $j++) {
+                                        for($j = 0; $j < count($data['records']); $j++) {
                                             array_push($data['records'][$j], [
                                                 "jobProduction" => $jobProduction,
                                                 "jobPerformance" => $jobPerformance,
@@ -4406,43 +4402,43 @@ class ReportsController extends Controller
                                 $endDate = $records[$i]->run_date_time;
                                 $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                 $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                                if ($data['machine']->time_uom == 'Hr') {
-                                    if ($duration == 0) {
+                                if($data['machine']->time_uom == 'Hr') {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = (($records[$i]->length - $oldLength) / $duration) * 60;
                                     }
-                                } elseif ($data['machine']->time_uom == 'Min') {
-                                    if ($duration == 0) {
+                                } elseif($data['machine']->time_uom == 'Min') {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = ($records[$i]->length - $oldLength) / $duration;
                                     }
                                 } else {
-                                    if ($duration == 0) {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = (($records[$i]->length - $oldLength) / $duration) / 60;
                                     }
                                 }
-                                foreach ($runningCodes as $runningCode) {
-                                    if ($runningCode->id == $records[$i]->error_id) {
+                                foreach($runningCodes as $runningCode) {
+                                    if($runningCode->id == $records[$i]->error_id) {
                                         $runTime += $duration;
                                         $production += $records[$i]->length - $oldLength;
                                         $jobProduction += $records[$i]->length - $oldLength;
                                     }
                                 }
-                                foreach ($idleErrors as $idleError) {
-                                    if ($idleError->id == $records[$i]->error_id) {
+                                foreach($idleErrors as $idleError) {
+                                    if($idleError->id == $records[$i]->error_id) {
                                         $idleTime += $duration;
                                     }
                                 }
-                                foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                    if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                foreach($jobWaitingCodes as $jobWaitingCode) {
+                                    if($jobWaitingCode->id == $records[$i]->error_id) {
                                         $jobWaitTime += $duration;
                                     }
                                 }
-                                if ($records[$i]->length - $oldLength < 0) {
+                                if($records[$i]->length - $oldLength < 0) {
                                     array_push($data['negativeRecords'], [
                                         "startDate" => $startDate,
                                         "endDate" => $endDate,
@@ -4477,23 +4473,23 @@ class ReportsController extends Controller
 
                             }
                         }
-                        for ($k = 0; $k < count($data['records']); $k++) {
-                            if ($jobRunTime == 0) {
+                        for($k = 0; $k < count($data['records']); $k++) {
+                            if($jobRunTime == 0) {
                                 $jobPerformance = 0;
                                 $jobAverageSpeed = 0;
                             } else {
-                                if ($data['machine']->time_uom == 'Min') {
+                                if($data['machine']->time_uom == 'Min') {
                                     $jobPerformance = (($jobProduction / $jobRunTime) / $data['machine']->max_speed) * 100;
                                     $jobAverageSpeed = $jobProduction / $jobRunTime;
-                                } elseif ($data['machine']->time_uom == 'Hr') {
+                                } elseif($data['machine']->time_uom == 'Hr') {
                                     $jobPerformance = (($jobProduction / $jobRunTime) * 60 / $data['machine']->max_speed) * 100;
                                     $jobAverageSpeed = ($jobProduction / $jobRunTime) * 60;
-                                } elseif ($data['machine']->time_uom == 'Sec') {
+                                } elseif($data['machine']->time_uom == 'Sec') {
                                     $jobPerformance = ((($jobProduction / $jobRunTime) / 60) / $data['machine']->max_speed) * 100;
                                     $jobAverageSpeed = (($jobProduction / $jobRunTime) / 60);
                                 }
                             }
-                            if (!isset($data['records'][$k][0]['jobProduction']) || !isset($data['records'][$k][0]['jobPerformance'])) {
+                            if(!isset($data['records'][$k][0]['jobProduction']) || !isset($data['records'][$k][0]['jobPerformance'])) {
                                 array_push($data['records'][$k], [
                                     "jobProduction" => $jobProduction,
                                     "jobPerformance" => $jobPerformance,
@@ -4502,10 +4498,10 @@ class ReportsController extends Controller
                                 ]);
                             }
                         }
-                        if ($runTime > 0) {
-                            if ($data['machine']->time_uom == 'Hr') {
+                        if($runTime > 0) {
+                            if($data['machine']->time_uom == 'Hr') {
                                 $actualSpeed = $production / $runTime * 60;
-                            } elseif ($data['machine']->time_uom == 'Min') {
+                            } elseif($data['machine']->time_uom == 'Min') {
                                 $actualSpeed = $production / $runTime;
                             } else {
                                 $actualSpeed = $production / $runTime / 60;
@@ -4514,7 +4510,7 @@ class ReportsController extends Controller
                             $actualSpeed = 0;
                         }
                     }
-                    if (Session::get('rights') == 0) {
+                    if(Session::get('rights') == 0) {
                         $data['user'] = Users::find($loginRecord[0]->user_id);
                     } else {
                         $data['user'] = Users::find(Session::get('user_name'));
@@ -4531,7 +4527,7 @@ class ReportsController extends Controller
                     $data['shift'] = $request->input('shiftSelection');
                     $data['date'] = $date;
 
-                    if (count($data['negativeRecords']) > 0) {
+                    if(count($data['negativeRecords']) > 0) {
 
                         Mail::send('emails.negative-meters', $data, function ($message) use ($data) {
                             $message->from('systems.services@packages.com.pk', 'RotoEye Cloud');
@@ -4551,12 +4547,12 @@ class ReportsController extends Controller
                     Session::flash("error", "No Record for the selected shift and date. Please try again.");
                     return Redirect::back();
                 }
-            } elseif ($request->input('reportType') == 'shift-production-report-next') {
+            } elseif($request->input('reportType') == 'shift-production-report-next') {
                 $shiftSelection = $request->input('shiftSelection');
                 $machine = Machine::find($machine_id);
-                if ($shiftSelection[0] == 'All-Day') {
+                if($shiftSelection[0] == 'All-Day') {
                     $shifts_id = [];
-                    foreach ($machine->section->department->businessUnit->company->shifts as $shift) {
+                    foreach($machine->section->department->businessUnit->company->shifts as $shift) {
                         array_push($shifts_id, $shift->id);
                     }
                     $minStarted = Shift::find($shifts_id[0])->min_started;
@@ -4565,14 +4561,14 @@ class ReportsController extends Controller
                     $to_date = $request->input('to_date');
                     $data['from'] = $from_date;
                     $data['to'] = $to_date;
-                    $startDateTime = date('Y-m-d H:i:s', strtotime($data['from'] . ' + ' . $minStarted . ' minutes'));
-                    $endDateTime = date('Y-m-d H:i:s', strtotime($data['to'] . ' + ' . $minEnded . ' minutes'));
+                    $startDateTime = date('Y-m-d H:i:s', strtotime($data['from'].' + '.$minStarted.' minutes'));
+                    $endDateTime = date('Y-m-d H:i:s', strtotime($data['to'].' + '.$minEnded.' minutes'));
 
                 } else {
                     $minStarted = Shift::find($shiftSelection[0])->min_started;
                     $minEnded = Shift::find($shiftSelection[count($shiftSelection) - 1])->min_ended;
-                    $startDateTime = date('Y-m-d H:i:s', strtotime($date . ' + ' . $minStarted . ' minutes'));
-                    $endDateTime = date('Y-m-d H:i:s', strtotime($date . ' + ' . $minEnded . ' minutes'));
+                    $startDateTime = date('Y-m-d H:i:s', strtotime($date.' + '.$minStarted.' minutes'));
+                    $endDateTime = date('Y-m-d H:i:s', strtotime($date.' + '.$minEnded.' minutes'));
                 }
 
                 $data['machine'] = Machine::find($machine_id);
@@ -4581,7 +4577,7 @@ class ReportsController extends Controller
                 $runningCodes = Error::select('id')->where('category', '=', 'Running')->get();
                 $jobWaitingCodes = Error::select('id')->where('category', '=', 'Job Waiting')->get();
 
-                if (date('Y-m-d H:i:s') < $endDateTime) {
+                if(date('Y-m-d H:i:s') < $endDateTime) {
                     $endDateTime = date('Y-m-d H:i:s');
                 }
 
@@ -4636,7 +4632,7 @@ class ReportsController extends Controller
                     ->orderby('run_date_time', 'ASC')
                     ->get();
 
-                if (count($records) > 0) {
+                if(count($records) > 0) {
                     $data['records'] = [];
                     $data['negativeRecords'] = [];
                     $startDate = $records[0]->run_date_time;
@@ -4658,61 +4654,61 @@ class ReportsController extends Controller
                     $jobRunTime = 0;
 
                     $totalTime = (strtotime($endDateTime) - strtotime($startDateTime)) / 60;
-                    if (count($records) > 1) {
-                        for ($i = 0; $i < count($records); $i++) {
+                    if(count($records) > 1) {
+                        for($i = 0; $i < count($records); $i++) {
 
                             $running_speed = isset($records[$i]->sleeve_speed) ? $records[$i]->sleeve_speed : $data['machine']->max_speed;
-                            if (isset($records[$i + 1])) {
-                                if ($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
+                            if(isset($records[$i + 1])) {
+                                if($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
                                     $endDate = $records[$i]->run_date_time;
                                     $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                     $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                                    if ($data['machine']->time_uom == 'Hr') {
-                                        if ($duration == 0) {
+                                    if($data['machine']->time_uom == 'Hr') {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = (($records[$i]->length - $oldLength) / $duration) * 60;
                                         }
-                                    } elseif ($data['machine']->time_uom == 'Min') {
-                                        if ($duration == 0) {
+                                    } elseif($data['machine']->time_uom == 'Min') {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = ($records[$i]->length - $oldLength) / $duration;
                                         }
                                     } else {
-                                        if ($duration == 0) {
+                                        if($duration == 0) {
                                             $instantSpeed = 0;
                                         } else {
                                             $instantSpeed = (($records[$i]->length - $oldLength) / $duration) / 60;
                                         }
                                     }
-                                    foreach ($runningCodes as $runningCode) {
-                                        if ($runningCode->id == $records[$i]->error_id) {
+                                    foreach($runningCodes as $runningCode) {
+                                        if($runningCode->id == $records[$i]->error_id) {
                                             $runTime += $duration;
                                             $jobRunTime += $duration;
                                             $production += $records[$i]->length - $oldLength;
-                                            if ($data['machine']->time_uom == 'Min') {
+                                            if($data['machine']->time_uom == 'Min') {
                                                 $targetHour += ($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0;
                                                 $jobTargetHour += ($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0;
-                                            } elseif ($data['machine']->time_uom == 'Hr') {
+                                            } elseif($data['machine']->time_uom == 'Hr') {
                                                 $targetHour += (($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0) * 60;
                                                 $jobTargetHour += (($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0) * 60;
 
-                                            } elseif ($data['machine']->time_uom == 'Sec') {
+                                            } elseif($data['machine']->time_uom == 'Sec') {
                                                 $targetHour += ((($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0) / 60);
                                                 $jobTargetHour += ((($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0) / 60);
                                             }
-                                            if (isset($records[$i]->trim_width) && isset($records[$i]->slitted_reel_width) && isset($records[$i]->ups) && isset($machine->machine_width)) {
+                                            if(isset($records[$i]->trim_width) && isset($records[$i]->slitted_reel_width) && isset($records[$i]->ups) && isset($machine->machine_width)) {
                                                 $rotoeyeNextProduction += $records[$i]->length - $oldLength;
                                                 $productionArea += ($records[$i]->trim_width + ($records[$i]->slitted_reel_width * $records[$i]->ups)) * ($records[$i]->length - $oldLength);
                                                 $jobProductionArea += ($records[$i]->trim_width + ($records[$i]->slitted_reel_width * $records[$i]->ups)) * ($records[$i]->length - $oldLength);
-                                                if (isset($records[$i]->gsm)) {
+                                                if(isset($records[$i]->gsm)) {
                                                     $gsm += $records[$i]->gsm * ($records[$i]->trim_width + ($records[$i]->slitted_reel_width * $records[$i]->ups)) * ($records[$i]->length - $oldLength);
                                                     $jobGsm += $records[$i]->gsm * ($records[$i]->trim_width + ($records[$i]->slitted_reel_width * $records[$i]->ups)) * ($records[$i]->length - $oldLength);
                                                 }
 
                                             }
-                                            if (isset($records[$i]->col) && isset($records[$i]->ups) && ($records[$i]->ups > 0) && ($records[$i]->col > 0)) {
+                                            if(isset($records[$i]->col) && isset($records[$i]->ups) && ($records[$i]->ups > 0) && ($records[$i]->col > 0)) {
                                                 $ea += ($records[$i]->length - $oldLength) / $records[$i]->col * $records[$i]->ups;
                                                 $jobEa += ($records[$i]->length - $oldLength) / $records[$i]->col * $records[$i]->ups;
                                             }
@@ -4720,18 +4716,18 @@ class ReportsController extends Controller
                                             $jobProduction += $records[$i]->length - $oldLength;
                                         }
                                     }
-                                    foreach ($idleErrors as $idleError) {
-                                        if ($idleError->id == $records[$i]->error_id) {
+                                    foreach($idleErrors as $idleError) {
+                                        if($idleError->id == $records[$i]->error_id) {
                                             $idleTime += $duration;
                                         }
                                     }
-                                    foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                        if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                    foreach($jobWaitingCodes as $jobWaitingCode) {
+                                        if($jobWaitingCode->id == $records[$i]->error_id) {
                                             $jobWaitTime += $duration;
                                         }
                                     }
 
-                                    if ($records[$i]->length - $oldLength < 0) {
+                                    if($records[$i]->length - $oldLength < 0) {
                                         array_push($data['negativeRecords'], [
                                             "startDate" => $startDate,
                                             "endDate" => $endDate,
@@ -4782,28 +4778,28 @@ class ReportsController extends Controller
                                     ]);
 
                                     $startDate = $endDate;
-                                    if ($records[$i]->job_id != $records[$i + 1]->job_id) {
+                                    if($records[$i]->job_id != $records[$i + 1]->job_id) {
                                         $oldLength = $records[$i + 1]->length;
-                                        if ($jobRunTime == 0) {
+                                        if($jobRunTime == 0) {
                                             $jobPerformance = 0;
                                             $jobAverageSpeed = 0;
                                         } else {
 
-                                            if ($data['machine']->time_uom == 'Min') {
+                                            if($data['machine']->time_uom == 'Min') {
                                                 $jobPerformance = (($jobProduction / $jobRunTime) / $running_speed) * 100;
                                                 $jobAverageSpeed = $jobProduction / $jobRunTime;
-                                            } elseif ($data['machine']->time_uom == 'Hr') {
+                                            } elseif($data['machine']->time_uom == 'Hr') {
                                                 $jobPerformance = (($jobProduction / $jobRunTime) * 60 / $running_speed) * 100;
                                                 $jobAverageSpeed = ($jobProduction / $jobRunTime) * 60;
-                                            } elseif ($data['machine']->time_uom == 'Sec') {
+                                            } elseif($data['machine']->time_uom == 'Sec') {
                                                 $jobPerformance = ((($jobProduction / $jobRunTime) / 60) / $running_speed) * 100;
                                                 $jobAverageSpeed = (($jobProduction / $jobRunTime) / 60);
                                             }
                                         }
 
-                                        for ($j = 0; $j < count($data['records']); $j++) {
+                                        for($j = 0; $j < count($data['records']); $j++) {
                                             $jobUtilization = 0;
-                                            if (isset($records[$i]->trim_width) && isset($records[$i]->slitted_reel_width) && isset($records[$i]->ups) && isset($machine->machine_width) && $jobProduction > 0) {
+                                            if(isset($records[$i]->trim_width) && isset($records[$i]->slitted_reel_width) && isset($records[$i]->ups) && isset($machine->machine_width) && $jobProduction > 0) {
                                                 $jobUtilization = $jobProductionArea / ($jobProduction * $machine->machine_width) * 100;
                                             }
                                             array_push($data['records'][$j], [
@@ -4835,54 +4831,54 @@ class ReportsController extends Controller
                                 $endDate = $records[$i]->run_date_time;
                                 $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                 $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                                if ($data['machine']->time_uom == 'Hr') {
-                                    if ($duration == 0) {
+                                if($data['machine']->time_uom == 'Hr') {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = (($records[$i]->length - $oldLength) / $duration) * 60;
                                     }
-                                } elseif ($data['machine']->time_uom == 'Min') {
-                                    if ($duration == 0) {
+                                } elseif($data['machine']->time_uom == 'Min') {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = ($records[$i]->length - $oldLength) / $duration;
                                     }
                                 } else {
-                                    if ($duration == 0) {
+                                    if($duration == 0) {
                                         $instantSpeed = 0;
                                     } else {
                                         $instantSpeed = (($records[$i]->length - $oldLength) / $duration) / 60;
                                     }
                                 }
-                                foreach ($runningCodes as $runningCode) {
-                                    if ($runningCode->id == $records[$i]->error_id) {
+                                foreach($runningCodes as $runningCode) {
+                                    if($runningCode->id == $records[$i]->error_id) {
                                         $runTime += $duration;
                                         $production += $records[$i]->length - $oldLength;
-                                        if ($data['machine']->time_uom == 'Min') {
+                                        if($data['machine']->time_uom == 'Min') {
                                             $targetHour += ($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0;
                                             $jobTargetHour += ($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0;
-                                        } elseif ($data['machine']->time_uom == 'Hr') {
+                                        } elseif($data['machine']->time_uom == 'Hr') {
                                             $targetHour += (($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0) * 60;
                                             $jobTargetHour += (($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0) * 60;
 
-                                        } elseif ($data['machine']->time_uom == 'Sec') {
+                                        } elseif($data['machine']->time_uom == 'Sec') {
                                             $targetHour = ((($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0) / 60);
                                             $jobTargetHour = ((($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0) / 60);
                                         }
 
-                                        if (isset($records[$i]->trim_width) && isset($records[$i]->slitted_reel_width) && isset($records[$i]->ups) && isset($machine->machine_width)) {
+                                        if(isset($records[$i]->trim_width) && isset($records[$i]->slitted_reel_width) && isset($records[$i]->ups) && isset($machine->machine_width)) {
 
                                             $rotoeyeNextProduction += $records[$i]->length - $oldLength;
                                             $productionArea += ($records[$i]->trim_width + ($records[$i]->slitted_reel_width * $records[$i]->ups)) * ($records[$i]->length - $oldLength);
                                             $jobProductionArea += ($records[$i]->trim_width + ($records[$i]->slitted_reel_width * $records[$i]->ups)) * ($records[$i]->length - $oldLength);
-                                            if (isset($records[$i]->gsm)) {
+                                            if(isset($records[$i]->gsm)) {
                                                 $gsm += $records[$i]->gsm * ($records[$i]->trim_width + ($records[$i]->slitted_reel_width * $records[$i]->ups)) * ($records[$i]->length - $oldLength);
                                                 $jobGsm += $records[$i]->gsm * ($records[$i]->trim_width + ($records[$i]->slitted_reel_width * $records[$i]->ups)) * ($records[$i]->length - $oldLength);
 
                                             }
 
                                         }
-                                        if (isset($records[$i]->col) && isset($records[$i]->ups) && ($records[$i]->ups > 0) && ($records[$i]->col > 0)) {
+                                        if(isset($records[$i]->col) && isset($records[$i]->ups) && ($records[$i]->ups > 0) && ($records[$i]->col > 0)) {
                                             $ea += ($records[$i]->length - $oldLength) * $records[$i]->col * $records[$i]->ups;
                                             $jobEa += ($records[$i]->length - $oldLength) * $records[$i]->col * $records[$i]->ups;
                                         }
@@ -4890,17 +4886,17 @@ class ReportsController extends Controller
 
                                     }
                                 }
-                                foreach ($idleErrors as $idleError) {
-                                    if ($idleError->id == $records[$i]->error_id) {
+                                foreach($idleErrors as $idleError) {
+                                    if($idleError->id == $records[$i]->error_id) {
                                         $idleTime += $duration;
                                     }
                                 }
-                                foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                    if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                foreach($jobWaitingCodes as $jobWaitingCode) {
+                                    if($jobWaitingCode->id == $records[$i]->error_id) {
                                         $jobWaitTime += $duration;
                                     }
                                 }
-                                if ($records[$i]->length - $oldLength < 0) {
+                                if($records[$i]->length - $oldLength < 0) {
                                     array_push($data['negativeRecords'], [
                                         "startDate" => $startDate,
                                         "endDate" => $endDate,
@@ -4948,25 +4944,25 @@ class ReportsController extends Controller
                                     "process_name" => $records[$i]->process_name,
                                 ]);
 
-                                if ($jobRunTime == 0) {
+                                if($jobRunTime == 0) {
                                     $jobPerformance = 0;
                                     $jobAverageSpeed = 0;
                                 } else {
 
-                                    if ($data['machine']->time_uom == 'Min') {
+                                    if($data['machine']->time_uom == 'Min') {
                                         $jobPerformance = (($jobProduction / $jobRunTime) / $running_speed) * 100;
                                         $jobAverageSpeed = $jobProduction / $jobRunTime;
-                                    } elseif ($data['machine']->time_uom == 'Hr') {
+                                    } elseif($data['machine']->time_uom == 'Hr') {
                                         $jobPerformance = (($jobProduction / $jobRunTime) * 60 / $running_speed) * 100;
                                         $jobAverageSpeed = ($jobProduction / $jobRunTime) * 60;
-                                    } elseif ($data['machine']->time_uom == 'Sec') {
+                                    } elseif($data['machine']->time_uom == 'Sec') {
                                         $jobPerformance = ((($jobProduction / $jobRunTime) / 60) / $running_speed) * 100;
                                         $jobAverageSpeed = (($jobProduction / $jobRunTime) / 60);
                                     }
                                 }
-                                for ($j = 0; $j < count($data['records']); $j++) {
+                                for($j = 0; $j < count($data['records']); $j++) {
                                     $jobUtilization = 0;
-                                    if (isset($records[$i]->trim_width) && isset($records[$i]->slitted_reel_width) && isset($records[$i]->ups) && isset($machine->machine_width) && $jobProduction > 0) {
+                                    if(isset($records[$i]->trim_width) && isset($records[$i]->slitted_reel_width) && isset($records[$i]->ups) && isset($machine->machine_width) && $jobProduction > 0) {
                                         $jobUtilization = $jobProductionArea / ($jobProduction * $machine->machine_width) * 100;
                                     }
 
@@ -4994,7 +4990,7 @@ class ReportsController extends Controller
                             }
                         }
                     }
-                    if (Session::get('rights') == 0) {
+                    if(Session::get('rights') == 0) {
                         $data['user'] = Users::find($loginRecord[0]->user_id);
                     } else {
                         $data['user'] = Users::find(Session::get('user_name'));
@@ -5015,7 +5011,7 @@ class ReportsController extends Controller
                     $data['current_time'] = date('Y-m-d H:i:s');
                     //return $data['records'];
 
-                    if (count($data['negativeRecords']) > 0) {
+                    if(count($data['negativeRecords']) > 0) {
 
                         //        Mail::send('emails.negative-meters', $data, function ($message) use ($data) {
                         //        $message->from('systems.services@packages.com.pk', 'RotoEye Cloud');
@@ -5044,19 +5040,18 @@ class ReportsController extends Controller
         }
     }
 
-    public function lossesReports(Request $request, $id)
-    {
+    public function lossesReports(Request $request, $id) {
         //dd($request->all());
         $data['path'] = Route::getFacadeRoot()->current()->uri();
         $user_id = Session::get('user_id');
-        if (isset($user_id)) {
-            if (Session::get('rights') == 0) {
+        if(isset($user_id)) {
+            if(Session::get('rights') == 0) {
                 $data['layout'] = 'web-layout';
-            } elseif (Session::get('rights') == 1) {
+            } elseif(Session::get('rights') == 1) {
                 $data['layout'] = 'admin-layout';
-            } elseif (Session::get('rights') == 2) {
+            } elseif(Session::get('rights') == 2) {
                 $data['layout'] = 'power-user-layout';
-            } elseif (Session::get('rights') == 3) {
+            } elseif(Session::get('rights') == 3) {
                 $data['layout'] = 'reporting-user-layout';
             }
             $data['machine'] = Machine::find(Crypt::decrypt($id));
@@ -5085,31 +5080,31 @@ class ReportsController extends Controller
             $data['to'] = $to_date = date('Y-m-d H:i:s', strtotime($request->input('losses_to_date')));
             $data['shift'] = $shiftSelection = $request->input('lossesShiftSelection');
 
-            if ($shiftSelection[0] == 'All-Day') {
+            if($shiftSelection[0] == 'All-Day') {
                 $machine = Machine::find($data['machine']->id);
                 $shifts_id = [];
-                foreach ($machine->section->department->businessUnit->company->shifts as $shift) {
+                foreach($machine->section->department->businessUnit->company->shifts as $shift) {
                     array_push($shifts_id, $shift->id);
                 }
 
                 $minStarted = Shift::find($shifts_id[0])->min_started;
                 $minEnded = Shift::find($shifts_id[count($shifts_id) - 1])->min_ended;
 
-                $startDateTime = date('Y-m-d H:i:s', strtotime($data['from'] . ' + ' . $minStarted . ' minutes'));
-                $endDateTime = date('Y-m-d H:i:s', strtotime($data['to'] . ' + ' . $minEnded . ' minutes'));
+                $startDateTime = date('Y-m-d H:i:s', strtotime($data['from'].' + '.$minStarted.' minutes'));
+                $endDateTime = date('Y-m-d H:i:s', strtotime($data['to'].' + '.$minEnded.' minutes'));
             } else {
 
                 $minStarted = Shift::find($shiftSelection[0])->min_started;
                 $minEnded = Shift::find($shiftSelection[count($shiftSelection) - 1])->min_ended;
-                $startDateTime = date('Y-m-d H:i:s', strtotime($from_date . ' + ' . $minStarted . ' minutes'));
-                $endDateTime = date('Y-m-d H:i:s', strtotime($from_date . ' + ' . $minEnded . ' minutes'));
+                $startDateTime = date('Y-m-d H:i:s', strtotime($from_date.' + '.$minStarted.' minutes'));
+                $endDateTime = date('Y-m-d H:i:s', strtotime($from_date.' + '.$minEnded.' minutes'));
             }
 
-            if (date('Y-m-d H:i:s') < $endDateTime) {
+            if(date('Y-m-d H:i:s') < $endDateTime) {
                 $endDateTime = date('Y-m-d H:i:s');
             }
             //Job Wise Setting Report
-            if ($request->input('lossesReportType') == 'job-wise-setting') {
+            if($request->input('lossesReportType') == 'job-wise-setting') {
 
                 $totalSettingMeters = 0;
                 $totalSettingMinutes = 0;
@@ -5151,17 +5146,17 @@ class ReportsController extends Controller
                     ->orderby('run_date_time', 'ASC')
                     ->get();
 
-                if (count($records) > 0) {
+                if(count($records) > 0) {
                     $data['records'] = [];
                     $startDate = $records[0]->run_date_time;
                     $oldLength = $records[0]->length;
-                    for ($i = 0; $i < count($records); $i++) {
-                        if (isset($records[$i + 1])) {
-                            if ($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
+                    for($i = 0; $i < count($records); $i++) {
+                        if(isset($records[$i + 1])) {
+                            if($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
                                 $endDate = $records[$i]->run_date_time;
                                 $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                 $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                                if ($records[$i]->error_name == 'Setting') {
+                                if($records[$i]->error_name == 'Setting') {
                                     array_push($data['records'], [
                                         "job_id" => $records[$i]->job_id,
                                         "job_name" => $records[$i]->job_name,
@@ -5186,7 +5181,7 @@ class ReportsController extends Controller
                             $endDate = $records[$i]->run_date_time;
                             $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                             $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                            if ($records[$i]->error_name == 'Setting') {
+                            if($records[$i]->error_name == 'Setting') {
                                 array_push($data['records'], [
                                     "job_id" => $records[$i]->job_id,
                                     "job_name" => $records[$i]->job_name,
@@ -5209,7 +5204,7 @@ class ReportsController extends Controller
                             $oldLength = $records[count($records) - 1]->length;
                         }
                     }
-                    if (Session::get('rights') == 0) {
+                    if(Session::get('rights') == 0) {
                         $data['user'] = Users::find($loginRecord[0]->user_id);
                     } else {
                         $data['user'] = Users::find(Session::get('user_name'));
@@ -5224,7 +5219,7 @@ class ReportsController extends Controller
                 }
             }
             //Performance Loss Report
-            elseif ($request->input('lossesReportType') == 'performance=loss') {
+            elseif($request->input('lossesReportType') == 'performance=loss') {
                 $materialProduction = 0;
                 $productProduction = 0;
                 $materialRunTime = 0;
@@ -5276,7 +5271,7 @@ class ReportsController extends Controller
                     ->where('records.run_date_time', '<=', $endDateTime)
                     ->orderby('run_date_time', 'ASC')
                     ->get();
-                if (count($records) > 0) {
+                if(count($records) > 0) {
                     $data['records'] = [];
                     $data['secondRecords'] = [];
                     $startDate = $records[0]->run_date_time;
@@ -5286,30 +5281,30 @@ class ReportsController extends Controller
                     $jobProduction = 0;
                     $jobRunTime = 0;
                     $totalTime = (strtotime($endDateTime) - strtotime($startDateTime)) / 60;
-                    if (count($records) > 1) {
-                        for ($i = 0; $i < count($records); $i++) {
-                            if (isset($records[$i + 1])) {
-                                if ($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
+                    if(count($records) > 1) {
+                        for($i = 0; $i < count($records); $i++) {
+                            if(isset($records[$i + 1])) {
+                                if($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
                                     $endDate = $records[$i]->run_date_time;
                                     $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                     $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                                    foreach ($idleErrors as $idleError) {
-                                        if ($idleError->id == $records[$i]->error_id) {
+                                    foreach($idleErrors as $idleError) {
+                                        if($idleError->id == $records[$i]->error_id) {
                                             $idleTime += $duration;
                                         }
                                     }
-                                    foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                        if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                    foreach($jobWaitingCodes as $jobWaitingCode) {
+                                        if($jobWaitingCode->id == $records[$i]->error_id) {
                                             $jobWaitTime += $duration;
                                         }
                                     }
-                                    foreach ($runningCodes as $runningCode) {
-                                        if ($runningCode->id == $records[$i]->error_id) {
+                                    foreach($runningCodes as $runningCode) {
+                                        if($runningCode->id == $records[$i]->error_id) {
                                             $runTime += $duration;
                                             $production += $records[$i]->length - $oldLength;
                                             $jobProduction += $records[$i]->length - $oldLength;
                                             $jobRunTime += $duration;
-                                            if (!in_array($records[$i]->job_id, array_column($data['records'], 'job_id'))) {
+                                            if(!in_array($records[$i]->job_id, array_column($data['records'], 'job_id'))) {
                                                 array_push($data['records'], [
                                                     "id" => $records[$i]->id,
                                                     "job_id" => $records[$i]->job_id,
@@ -5328,12 +5323,12 @@ class ReportsController extends Controller
                                         }
                                     }
                                     $startDate = $endDate;
-                                    if ($records[$i]->job_id != $records[$i + 1]->job_id) {
+                                    if($records[$i]->job_id != $records[$i + 1]->job_id) {
                                         $oldLength = $records[$i + 1]->length;
 
-                                        for ($j = 0; $j < count($data['records']); $j++) {
-                                            if (isset($data['records'][$j]['jobProduction'])) {
-                                                if ($data['records'][$j]['job_id'] == $records[$i]->job_id) {
+                                        for($j = 0; $j < count($data['records']); $j++) {
+                                            if(isset($data['records'][$j]['jobProduction'])) {
+                                                if($data['records'][$j]['job_id'] == $records[$i]->job_id) {
                                                     $prev_jobProduction = $data['records'][$j]['jobProduction'];
                                                     $prev_jobRunTime = $data['records'][$j]['jobRunTime'];
                                                     Arr::set($data['records'][$j], 'jobProduction', $prev_jobProduction + $jobProduction);
@@ -5354,23 +5349,23 @@ class ReportsController extends Controller
                                 $endDate = $records[$i]->run_date_time;
                                 $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                 $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                                foreach ($idleErrors as $idleError) {
-                                    if ($idleError->id == $records[$i]->error_id) {
+                                foreach($idleErrors as $idleError) {
+                                    if($idleError->id == $records[$i]->error_id) {
                                         $idleTime += $duration;
                                     }
                                 }
-                                foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                    if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                foreach($jobWaitingCodes as $jobWaitingCode) {
+                                    if($jobWaitingCode->id == $records[$i]->error_id) {
                                         $jobWaitTime += $duration;
                                     }
                                 }
-                                foreach ($runningCodes as $runningCode) {
-                                    if ($runningCode->id == $records[$i]->error_id) {
+                                foreach($runningCodes as $runningCode) {
+                                    if($runningCode->id == $records[$i]->error_id) {
                                         $runTime += $duration;
                                         $production += $records[$i]->length - $oldLength;
                                         $jobProduction += $records[$i]->length - $oldLength;
                                         $jobRunTime += $duration;
-                                        if (!in_array($records[$i]->job_id, array_column($data['records'], 'job_id'))) {
+                                        if(!in_array($records[$i]->job_id, array_column($data['records'], 'job_id'))) {
                                             array_push($data['records'], [
                                                 "id" => $records[$i]->id,
                                                 "job_id" => $records[$i]->job_id,
@@ -5391,8 +5386,8 @@ class ReportsController extends Controller
                                 $startDate = $endDate;
                             }
                         }
-                        for ($k = 0; $k < count($data['records']); $k++) {
-                            if (!isset($data['records'][$k]['jobProduction'])) {
+                        for($k = 0; $k < count($data['records']); $k++) {
+                            if(!isset($data['records'][$k]['jobProduction'])) {
                                 Arr::set($data['records'][$k], 'jobProduction', $jobProduction);
                                 Arr::set($data['records'][$k], 'jobRunTime', $jobRunTime);
                             }
@@ -5408,17 +5403,17 @@ class ReportsController extends Controller
                             $data['records']
                         );
 
-                        for ($i = 0; $i < count($data['records']); $i++) {
+                        for($i = 0; $i < count($data['records']); $i++) {
                             $totalProduction += $data['records'][$i]['jobProduction'];
                             $totalRunTime += $data['records'][$i]['jobRunTime'];
-                            if (isset($data['records'][$i + 1])) {
+                            if(isset($data['records'][$i + 1])) {
                                 $materialProduction += $data['records'][$i]['jobProduction'];
                                 $materialRunTime += $data['records'][$i]['jobRunTime'];
                                 $productProduction += $data['records'][$i]['jobProduction'];
                                 $productRunTime += $data['records'][$i]['jobRunTime'];
-                                if ($data['records'][$i]['id'] != $data['records'][$i + 1]['id']) {
-                                    for ($j = $i; $j >= $materialLastCounter; $j--) {
-                                        if ($data['records'][$j]['id'] == $data['records'][$i]['id']) {
+                                if($data['records'][$i]['id'] != $data['records'][$i + 1]['id']) {
+                                    for($j = $i; $j >= $materialLastCounter; $j--) {
+                                        if($data['records'][$j]['id'] == $data['records'][$i]['id']) {
                                             Arr::set($data['records'][$j], 'materialProduction', $materialProduction);
                                             Arr::set($data['records'][$j], 'materialRunTime', $materialRunTime);
                                         }
@@ -5427,9 +5422,9 @@ class ReportsController extends Controller
                                     $materialProduction = 0;
                                     $materialRunTime = 0;
                                 }
-                                if ($data['records'][$i]['product_number'] != $data['records'][$i + 1]['product_number']) {
-                                    for ($j = $i; $j >= $productLastCounter; $j--) {
-                                        if ($data['records'][$j]['product_number'] == $data['records'][$i]['product_number']) {
+                                if($data['records'][$i]['product_number'] != $data['records'][$i + 1]['product_number']) {
+                                    for($j = $i; $j >= $productLastCounter; $j--) {
+                                        if($data['records'][$j]['product_number'] == $data['records'][$i]['product_number']) {
                                             Arr::set($data['records'][$j], 'productProduction', $productProduction);
                                             Arr::set($data['records'][$j], 'productRunTime', $productRunTime);
                                         }
@@ -5443,14 +5438,14 @@ class ReportsController extends Controller
                                 $materialRunTime += $data['records'][$i]['jobRunTime'];
                                 $productProduction += $data['records'][$i]['jobProduction'];
                                 $productRunTime += $data['records'][$i]['jobRunTime'];
-                                for ($j = $i; $j >= $productLastCounter; $j--) {
-                                    if ($data['records'][$j]['product_number'] == $data['records'][$i]['product_number']) {
+                                for($j = $i; $j >= $productLastCounter; $j--) {
+                                    if($data['records'][$j]['product_number'] == $data['records'][$i]['product_number']) {
                                         Arr::set($data['records'][$j], 'productProduction', $productProduction);
                                         Arr::set($data['records'][$j], 'productRunTime', $productRunTime);
                                     }
                                 }
-                                for ($j = $i; $j >= $materialLastCounter; $j--) {
-                                    if ($data['records'][$j]['id'] == $data['records'][$i]['id']) {
+                                for($j = $i; $j >= $materialLastCounter; $j--) {
+                                    if($data['records'][$j]['id'] == $data['records'][$i]['id']) {
                                         Arr::set($data['records'][$j], 'materialProduction', $materialProduction);
                                         Arr::set($data['records'][$j], 'materialRunTime', $materialRunTime);
                                     }
@@ -5458,10 +5453,10 @@ class ReportsController extends Controller
                             }
                         }
 
-                        if ($runTime > 0) {
-                            if ($data['machine']->time_uom == 'Hr') {
+                        if($runTime > 0) {
+                            if($data['machine']->time_uom == 'Hr') {
                                 $actualSpeed = $production / $runTime * 60;
-                            } elseif ($data['machine']->time_uom == 'Min') {
+                            } elseif($data['machine']->time_uom == 'Min') {
                                 $actualSpeed = $production / $runTime;
                             } else {
                                 $actualSpeed = $production / $runTime / 60;
@@ -5480,7 +5475,7 @@ class ReportsController extends Controller
                     $data['oee'] = ($runTime / ($totalTime - $idleTime)) * ($actualSpeed / $data['machine']->max_speed) * 100;
                     $data['ee'] = ($runTime / ($totalTime - $idleTime - $jobWaitTime)) * ($actualSpeed / $data['machine']->max_speed) * 100;
 
-                    if (Session::get('rights') == 0) {
+                    if(Session::get('rights') == 0) {
                         $data['user'] = Users::find($loginRecord[0]->user_id);
                     } else {
                         $data['user'] = Users::find(Session::get('user_name'));
@@ -5492,7 +5487,7 @@ class ReportsController extends Controller
                 }
             }
             //Availability Losses Report
-            elseif ($request->input('lossesReportType') == 'availability-losses') {
+            elseif($request->input('lossesReportType') == 'availability-losses') {
                 // dd($request->all());
                 $data['report_type'] = $request->report_type;
                 $cat = Categories::find($request->errorcat);
@@ -5510,20 +5505,20 @@ class ReportsController extends Controller
                     ->get();
 
 
-                if (count($records) > 0) {
+                if(count($records) > 0) {
                     $data['records'] = [];
                     $data['graphRecords'] = [];
                     $startDate = $records[0]->run_date_time;
-                    for ($i = 0; $i < count($records); $i++) {
-                        if (isset($records[$i + 1])) {
-                            if ($records[$i]->error_id != $records[$i + 1]->error_id) {
+                    for($i = 0; $i < count($records); $i++) {
+                        if(isset($records[$i + 1])) {
+                            if($records[$i]->error_id != $records[$i + 1]->error_id) {
                                 $endDate = $records[$i]->run_date_time;
                                 $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                 $duration = ((($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60);
 
-                                if ($records[$i]->error_id != 2) {
-                                    if (isset($errorIds)) {
-                                        if (in_array($records[$i]->error_id, $errorIds)) {
+                                if($records[$i]->error_id != 2) {
+                                    if(isset($errorIds)) {
+                                        if(in_array($records[$i]->error_id, $errorIds)) {
                                             // if($data['machine']->downtime_error != $records[$i]->error_id){
                                             array_push($data['records'], [
                                                 "from" => $startDate,
@@ -5555,9 +5550,9 @@ class ReportsController extends Controller
                             $endDate = $records[$i]->run_date_time;
                             $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                             $duration = ((($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60);
-                            if ($records[$i]->error_id != 2) {
-                                if (isset($errorIds)) {
-                                    if (in_array($records[$i]->error_id, $errorIds)) {
+                            if($records[$i]->error_id != 2) {
+                                if(isset($errorIds)) {
+                                    if(in_array($records[$i]->error_id, $errorIds)) {
                                         //if($data['machine']->downtime_error != $records[$i]->error_id){
                                         array_push($data['records'], [
                                             "from" => $startDate,
@@ -5588,11 +5583,11 @@ class ReportsController extends Controller
                     $count = 0;
                     $alreadyDone = [];
                     $duration = 0;
-                    for ($i = 0; $i < count($data['records']); $i++) {
-                        if (!in_array($data['records'][$i]['error_id'], $alreadyDone)) {
+                    for($i = 0; $i < count($data['records']); $i++) {
+                        if(!in_array($data['records'][$i]['error_id'], $alreadyDone)) {
 
-                            for ($j = 0; $j < count($data['records']); $j++) {
-                                if ($data['records'][$i]['error_id'] == $data['records'][$j]['error_id']) {
+                            for($j = 0; $j < count($data['records']); $j++) {
+                                if($data['records'][$i]['error_id'] == $data['records'][$j]['error_id']) {
                                     $count++;
                                     $duration += $data['records'][$j]['duration'];
                                 }
@@ -5610,7 +5605,7 @@ class ReportsController extends Controller
                         }
                     }
 
-                    if (Session::get('rights') == 0) {
+                    if(Session::get('rights') == 0) {
                         $data['user'] = Users::find($loginRecord[0]->user_id);
                     } else {
                         $data['user'] = Users::find(Session::get('user_name'));
@@ -5623,7 +5618,7 @@ class ReportsController extends Controller
                 }
             }
             //temp for bsp dashboard
-            elseif ($request->input('lossesReportType') == 'availability-losses-2') {
+            elseif($request->input('lossesReportType') == 'availability-losses-2') {
                 $records = DB::table('records')
                     ->join('errors', 'errors.id', '=', 'records.error_id')
                     ->select('errors.id as error_id', 'errors.name as error_name', 'records.run_date_time as run_date_time', 'records.job_id as job_id', 'records.user_id as user_id', 'records.length as length')
@@ -5632,7 +5627,7 @@ class ReportsController extends Controller
                     ->where('run_date_time', '<=', $endDateTime)
                     ->orderby('run_date_time', 'ASC')
                     ->get();
-                if (count($records) > 0) {
+                if(count($records) > 0) {
                     $runningCodes = Error::select('id')->where('category', '=', 'Running')->get();
                     $data['records'] = [];
                     $data['graphRecords'] = [];
@@ -5640,15 +5635,15 @@ class ReportsController extends Controller
                     $oldLength = $records[0]->length;
                     $runTime = 0;
                     $production = 0;
-                    for ($i = 0; $i < count($records); $i++) {
-                        if (isset($records[$i + 1])) {
-                            if ($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
+                    for($i = 0; $i < count($records); $i++) {
+                        if(isset($records[$i + 1])) {
+                            if($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
                                 $endDate = $records[$i]->run_date_time;
                                 $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                 $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
 
-                                foreach ($runningCodes as $runningCode) {
-                                    if ($runningCode->id == $records[$i]->error_id) {
+                                foreach($runningCodes as $runningCode) {
+                                    if($runningCode->id == $records[$i]->error_id) {
                                         $runTime += $duration;
                                         $production += $records[$i]->length - $oldLength;
                                     }
@@ -5665,7 +5660,7 @@ class ReportsController extends Controller
 
                                 ]);
                                 $startDate = $endDate;
-                                if ($records[$i]->job_id != $records[$i + 1]->job_id) {
+                                if($records[$i]->job_id != $records[$i + 1]->job_id) {
                                     $oldLength = $records[$i + 1]->length;
                                 } else {
                                     $oldLength = $records[$i]->length;
@@ -5677,8 +5672,8 @@ class ReportsController extends Controller
                             $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                             $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
 
-                            foreach ($runningCodes as $runningCode) {
-                                if ($runningCode->id == $records[$i]->error_id) {
+                            foreach($runningCodes as $runningCode) {
+                                if($runningCode->id == $records[$i]->error_id) {
                                     $runTime += $duration;
                                     $production += $records[$i]->length - $oldLength;
                                 }
@@ -5703,11 +5698,11 @@ class ReportsController extends Controller
                     $alreadyDone = [];
                     $duration = 0;
                     $production = 0;
-                    for ($i = 0; $i < count($data['records']); $i++) {
-                        if (!in_array($data['records'][$i]['error_id'], $alreadyDone)) {
-                            for ($j = 0; $j < count($data['records']); $j++) {
-                                if ($data['records'][$i]['error_id'] == $data['records'][$j]['error_id']) {
-                                    if ($data['records'][$i]['job_id'] == $data['records'][$j]['job_id']) {
+                    for($i = 0; $i < count($data['records']); $i++) {
+                        if(!in_array($data['records'][$i]['error_id'], $alreadyDone)) {
+                            for($j = 0; $j < count($data['records']); $j++) {
+                                if($data['records'][$i]['error_id'] == $data['records'][$j]['error_id']) {
+                                    if($data['records'][$i]['job_id'] == $data['records'][$j]['job_id']) {
                                         $count++;
                                     }
 
@@ -5729,7 +5724,7 @@ class ReportsController extends Controller
                         }
                     }
 
-                    if (Session::get('rights') == 0) {
+                    if(Session::get('rights') == 0) {
                         $data['user'] = Users::find($loginRecord[0]->user_id);
                     } else {
                         $data['user'] = Users::find(Session::get('user_name'));
@@ -5742,7 +5737,7 @@ class ReportsController extends Controller
                 }
             }
             //Error History Report
-            elseif ($request->input('lossesReportType') == 'error-history') {
+            elseif($request->input('lossesReportType') == 'error-history') {
                 $error_id = $request->input('error');
 
                 $records = DB::table('records')
@@ -5768,17 +5763,17 @@ class ReportsController extends Controller
                     ->get();
 
 
-                if (count($records) > 0) {
+                if(count($records) > 0) {
                     $data['records'] = [];
                     $startDate = $records[0]->run_date_time;
-                    for ($i = 0; $i < count($records); $i++) {
-                        if (isset($records[$i + 1])) {
-                            if ($records[$i]->error_id != $records[$i + 1]->error_id) {
+                    for($i = 0; $i < count($records); $i++) {
+                        if(isset($records[$i + 1])) {
+                            if($records[$i]->error_id != $records[$i + 1]->error_id) {
 
                                 $endDate = $records[$i]->run_date_time;
                                 $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                 $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                                if ($records[$i]->error_id == $error_id) {
+                                if($records[$i]->error_id == $error_id) {
                                     array_push($data['records'], [
                                         "from" => $startDate,
                                         "to" => $endDate,
@@ -5801,7 +5796,7 @@ class ReportsController extends Controller
                             $endDate = $records[$i]->run_date_time;
                             $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                             $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                            if ($records[$i]->error_id == $error_id) {
+                            if($records[$i]->error_id == $error_id) {
 
                                 array_push($data['records'], [
                                     "from" => $startDate,
@@ -5820,7 +5815,7 @@ class ReportsController extends Controller
                             $startDate = $endDate;
                         }
                     }
-                    if (Session::get('rights') == 0) {
+                    if(Session::get('rights') == 0) {
                         $data['user'] = Users::find($loginRecord[0]->user_id);
                     } else {
                         $data['user'] = Users::find(Session::get('user_name'));
@@ -5834,7 +5829,7 @@ class ReportsController extends Controller
             }
             //Error History Report Detailed
             // Commented from the front end instructed by Haroon Sab due to error in report and urgence issue
-            elseif ($request->input('lossesReportType') == 'detailed-error-history') {
+            elseif($request->input('lossesReportType') == 'detailed-error-history') {
                 $records = DB::table('records')
                     ->join('errors', 'errors.id', '=', 'records.error_id')
                     ->join('users', 'users.id', '=', 'records.user_id')
@@ -5857,13 +5852,13 @@ class ReportsController extends Controller
                     ->where('run_date_time', '<=', $endDateTime)
                     ->orderby('run_date_time', 'ASC')
                     ->get();
-                if (count($records) > 0) {
+                if(count($records) > 0) {
                     $data['records'] = [];
                     $startDate = $records[0]->run_date_time;
                     $oldLength = $records[0]->length;
-                    for ($i = 0; $i < count($records); $i++) {
-                        if (isset($records[$i + 1])) {
-                            if ($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
+                    for($i = 0; $i < count($records); $i++) {
+                        if(isset($records[$i + 1])) {
+                            if($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
                                 $endDate = $records[$i]->run_date_time;
                                 $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                 $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
@@ -5871,7 +5866,7 @@ class ReportsController extends Controller
                                 //   if($records[$i]->length  - $oldLength < 0){
                                 //
                                 //                                    }
-                                if ($records[$i]->error_id == $request->input('error')) {
+                                if($records[$i]->error_id == $request->input('error')) {
                                     array_push($data['records'], [
                                         "from" => $startDate,
                                         "to" => $endDate,
@@ -5889,7 +5884,7 @@ class ReportsController extends Controller
                                     ]);
                                 }
                                 $startDate = $endDate;
-                                if ($records[$i]->job_id != $records[$i + 1]->job_id) {
+                                if($records[$i]->job_id != $records[$i + 1]->job_id) {
                                     $oldLength = $records[$i + 1]->length;
                                 } else {
                                     $oldLength = $records[$i]->length;
@@ -5905,7 +5900,7 @@ class ReportsController extends Controller
                             //
                             //                                }
 
-                            if ($records[$i]->error_id == $request->input('error')) {
+                            if($records[$i]->error_id == $request->input('error')) {
                                 array_push($data['records'], [
                                     "from" => $startDate,
                                     "to" => $endDate,
@@ -5927,7 +5922,7 @@ class ReportsController extends Controller
                         }
                     }
 
-                    if (Session::get('rights') == 0) {
+                    if(Session::get('rights') == 0) {
                         $data['user'] = Users::find($loginRecord[0]->user_id);
                     } else {
                         $data['user'] = Users::find(Session::get('user_name'));
@@ -5941,7 +5936,7 @@ class ReportsController extends Controller
                 }
             }
             //Performance Loss Next Report
-            elseif ($request->input('lossesReportType') == 'performance-loss-next') {
+            elseif($request->input('lossesReportType') == 'performance-loss-next') {
                 $materialProduction = 0;
                 $productProduction = 0;
                 $materialRunTime = 0;
@@ -6005,7 +6000,7 @@ class ReportsController extends Controller
                     ->get();
 
 
-                if (count($records) > 0) {
+                if(count($records) > 0) {
                     $data['records'] = [];
                     $data['secondRecords'] = [];
                     $startDate = $records[0]->run_date_time;
@@ -6017,43 +6012,43 @@ class ReportsController extends Controller
                     $targetHour = 0;
                     $jobTargetHour = 0;
                     $totalTime = (strtotime($endDateTime) - strtotime($startDateTime)) / 60;
-                    if (count($records) > 1) {
-                        for ($i = 0; $i < count($records); $i++) {
+                    if(count($records) > 1) {
+                        for($i = 0; $i < count($records); $i++) {
                             $running_speed = isset($records[$i]->sleeve_speed) ? $records[$i]->sleeve_speed : $data['machine']->max_speed;
-                            if (isset($records[$i + 1])) {
-                                if ($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
+                            if(isset($records[$i + 1])) {
+                                if($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
                                     $endDate = $records[$i]->run_date_time;
                                     $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                     $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                                    foreach ($idleErrors as $idleError) {
-                                        if ($idleError->id == $records[$i]->error_id) {
+                                    foreach($idleErrors as $idleError) {
+                                        if($idleError->id == $records[$i]->error_id) {
                                             $idleTime += $duration;
                                         }
                                     }
-                                    foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                        if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                    foreach($jobWaitingCodes as $jobWaitingCode) {
+                                        if($jobWaitingCode->id == $records[$i]->error_id) {
                                             $jobWaitTime += $duration;
                                         }
                                     }
-                                    foreach ($runningCodes as $runningCode) {
-                                        if ($runningCode->id == $records[$i]->error_id) {
+                                    foreach($runningCodes as $runningCode) {
+                                        if($runningCode->id == $records[$i]->error_id) {
                                             $runTime += $duration;
                                             $production += $records[$i]->length - $oldLength;
                                             $jobProduction += $records[$i]->length - $oldLength;
                                             $jobRunTime += $duration;
-                                            if ($data['machine']->time_uom == 'Min') {
+                                            if($data['machine']->time_uom == 'Min') {
                                                 $targetHour += ($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0;
                                                 $jobTargetHour += ($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0;
-                                            } elseif ($data['machine']->time_uom == 'Hr') {
+                                            } elseif($data['machine']->time_uom == 'Hr') {
                                                 $targetHour += (($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0) * 60;
                                                 $jobTargetHour += (($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0) * 60;
 
-                                            } elseif ($data['machine']->time_uom == 'Sec') {
+                                            } elseif($data['machine']->time_uom == 'Sec') {
                                                 $targetHour += ((($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0) / 60);
                                                 $jobTargetHour += ((($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0) / 60);
                                             }
 
-                                            if (!in_array($records[$i]->job_id, array_column($data['records'], 'job_id'))) {
+                                            if(!in_array($records[$i]->job_id, array_column($data['records'], 'job_id'))) {
                                                 array_push($data['records'], [
                                                     "id" => $records[$i]->id,
                                                     "job_id" => $records[$i]->job_id,
@@ -6074,12 +6069,12 @@ class ReportsController extends Controller
                                         }
                                     }
                                     $startDate = $endDate;
-                                    if ($records[$i]->job_id != $records[$i + 1]->job_id) {
+                                    if($records[$i]->job_id != $records[$i + 1]->job_id) {
                                         $oldLength = $records[$i + 1]->length;
 
-                                        for ($j = 0; $j < count($data['records']); $j++) {
-                                            if (isset($data['records'][$j]['jobProduction'])) {
-                                                if ($data['records'][$j]['job_id'] == $records[$i]->job_id) {
+                                        for($j = 0; $j < count($data['records']); $j++) {
+                                            if(isset($data['records'][$j]['jobProduction'])) {
+                                                if($data['records'][$j]['job_id'] == $records[$i]->job_id) {
                                                     $prev_jobProduction = $data['records'][$j]['jobProduction'];
                                                     $prev_jobRunTime = $data['records'][$j]['jobRunTime'];
                                                     $prev_jobTargetHour = $data['records'][$j]['jobTargetHour'];
@@ -6104,34 +6099,34 @@ class ReportsController extends Controller
                                 $endDate = $records[$i]->run_date_time;
                                 $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                 $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                                foreach ($idleErrors as $idleError) {
-                                    if ($idleError->id == $records[$i]->error_id) {
+                                foreach($idleErrors as $idleError) {
+                                    if($idleError->id == $records[$i]->error_id) {
                                         $idleTime += $duration;
                                     }
                                 }
-                                foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                    if ($jobWaitingCode->id == $records[$i]->error_id) {
+                                foreach($jobWaitingCodes as $jobWaitingCode) {
+                                    if($jobWaitingCode->id == $records[$i]->error_id) {
                                         $jobWaitTime += $duration;
                                     }
                                 }
-                                foreach ($runningCodes as $runningCode) {
-                                    if ($runningCode->id == $records[$i]->error_id) {
+                                foreach($runningCodes as $runningCode) {
+                                    if($runningCode->id == $records[$i]->error_id) {
                                         $runTime += $duration;
                                         $production += $records[$i]->length - $oldLength;
                                         $jobProduction += $records[$i]->length - $oldLength;
                                         $jobRunTime += $duration;
-                                        if ($data['machine']->time_uom == 'Min') {
+                                        if($data['machine']->time_uom == 'Min') {
                                             $targetHour += ($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0;
                                             $jobTargetHour += ($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0;
-                                        } elseif ($data['machine']->time_uom == 'Hr') {
+                                        } elseif($data['machine']->time_uom == 'Hr') {
                                             $targetHour += (($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0) * 60;
                                             $jobTargetHour += (($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0) * 60;
 
-                                        } elseif ($data['machine']->time_uom == 'Sec') {
+                                        } elseif($data['machine']->time_uom == 'Sec') {
                                             $targetHour += ((($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0) / 60);
                                             $jobTargetHour += ((($records[$i]->length - $oldLength) != 0 ? ($records[$i]->length - $oldLength) / $running_speed : 0) / 60);
                                         }
-                                        if (!in_array($records[$i]->job_id, array_column($data['records'], 'job_id'))) {
+                                        if(!in_array($records[$i]->job_id, array_column($data['records'], 'job_id'))) {
                                             array_push($data['records'], [
                                                 "id" => $records[$i]->id,
                                                 "job_id" => $records[$i]->job_id,
@@ -6154,8 +6149,8 @@ class ReportsController extends Controller
                                 $startDate = $endDate;
                             }
                         }
-                        for ($k = 0; $k < count($data['records']); $k++) {
-                            if (!isset($data['records'][$k]['jobProduction'])) {
+                        for($k = 0; $k < count($data['records']); $k++) {
+                            if(!isset($data['records'][$k]['jobProduction'])) {
                                 Arr::set($data['records'][$k], 'jobProduction', $jobProduction);
                                 Arr::set($data['records'][$k], 'jobRunTime', $jobRunTime);
                                 Arr::set($data['records'][$k], 'jobTargetHour', $jobTargetHour);
@@ -6171,19 +6166,19 @@ class ReportsController extends Controller
                             $data['records']
                         );
 
-                        for ($i = 0; $i < count($data['records']); $i++) {
+                        for($i = 0; $i < count($data['records']); $i++) {
                             $totalProduction += $data['records'][$i]['jobProduction'];
                             $totalRunTime += $data['records'][$i]['jobRunTime'];
                             $totalTargetHour += $data['records'][$i]['jobTargetHour'];
-                            if (isset($data['records'][$i + 1])) {
+                            if(isset($data['records'][$i + 1])) {
                                 $materialProduction += $data['records'][$i]['jobProduction'];
                                 $materialRunTime += $data['records'][$i]['jobRunTime'];
                                 $materialTargetHour += $data['records'][$i]['jobTargetHour'];
                                 $productProduction += $data['records'][$i]['jobProduction'];
                                 $productRunTime += $data['records'][$i]['jobRunTime'];
-                                if ($data['records'][$i]['id'] != $data['records'][$i + 1]['id']) {
-                                    for ($j = $i; $j >= $materialLastCounter; $j--) {
-                                        if ($data['records'][$j]['id'] == $data['records'][$i]['id']) {
+                                if($data['records'][$i]['id'] != $data['records'][$i + 1]['id']) {
+                                    for($j = $i; $j >= $materialLastCounter; $j--) {
+                                        if($data['records'][$j]['id'] == $data['records'][$i]['id']) {
                                             Arr::set($data['records'][$j], 'materialProduction', $materialProduction);
                                             Arr::set($data['records'][$j], 'materialRunTime', $materialRunTime);
                                             Arr::set($data['records'][$j], 'materialTargetHour', $materialTargetHour);
@@ -6194,9 +6189,9 @@ class ReportsController extends Controller
                                     $materialRunTime = 0;
                                     $materialTargetHour = 0;
                                 }
-                                if ($data['records'][$i]['product_number'] != $data['records'][$i + 1]['product_number']) {
-                                    for ($j = $i; $j >= $productLastCounter; $j--) {
-                                        if ($data['records'][$j]['product_number'] == $data['records'][$i]['product_number']) {
+                                if($data['records'][$i]['product_number'] != $data['records'][$i + 1]['product_number']) {
+                                    for($j = $i; $j >= $productLastCounter; $j--) {
+                                        if($data['records'][$j]['product_number'] == $data['records'][$i]['product_number']) {
                                             Arr::set($data['records'][$j], 'productProduction', $productProduction);
                                             Arr::set($data['records'][$j], 'productRunTime', $productRunTime);
                                         }
@@ -6211,14 +6206,14 @@ class ReportsController extends Controller
                                 $materialTargetHour += $data['records'][$i]['jobTargetHour'];
                                 $productProduction += $data['records'][$i]['jobProduction'];
                                 $productRunTime += $data['records'][$i]['jobRunTime'];
-                                for ($j = $i; $j >= $productLastCounter; $j--) {
-                                    if ($data['records'][$j]['product_number'] == $data['records'][$i]['product_number']) {
+                                for($j = $i; $j >= $productLastCounter; $j--) {
+                                    if($data['records'][$j]['product_number'] == $data['records'][$i]['product_number']) {
                                         Arr::set($data['records'][$j], 'productProduction', $productProduction);
                                         Arr::set($data['records'][$j], 'productRunTime', $productRunTime);
                                     }
                                 }
-                                for ($j = $i; $j >= $materialLastCounter; $j--) {
-                                    if ($data['records'][$j]['id'] == $data['records'][$i]['id']) {
+                                for($j = $i; $j >= $materialLastCounter; $j--) {
+                                    if($data['records'][$j]['id'] == $data['records'][$i]['id']) {
                                         Arr::set($data['records'][$j], 'materialProduction', $materialProduction);
                                         Arr::set($data['records'][$j], 'materialRunTime', $materialRunTime);
                                         Arr::set($data['records'][$j], 'materialTargetHour', $materialTargetHour);
@@ -6227,10 +6222,10 @@ class ReportsController extends Controller
                             }
                         }
 
-                        if ($runTime > 0) {
-                            if ($data['machine']->time_uom == 'Hr') {
+                        if($runTime > 0) {
+                            if($data['machine']->time_uom == 'Hr') {
                                 $actualSpeed = $production / $runTime * 60;
-                            } elseif ($data['machine']->time_uom == 'Min') {
+                            } elseif($data['machine']->time_uom == 'Min') {
                                 $actualSpeed = $production / $runTime;
                             } else {
                                 $actualSpeed = $production / $runTime / 60;
@@ -6251,7 +6246,7 @@ class ReportsController extends Controller
                     $data['oee'] = ($runTime / ($totalTime - $idleTime)) * ($runTime > 0 ? ($targetHour / $runTime) : 0) * 100;
                     $data['ee'] = ($runTime / ($totalTime - $idleTime - $jobWaitTime)) * ($runTime > 0 ? ($targetHour / $runTime) : 0) * 100;
 
-                    if (Session::get('rights') == 0) {
+                    if(Session::get('rights') == 0) {
                         $data['user'] = Users::find($loginRecord[0]->user_id);
                     } else {
                         $data['user'] = Users::find(Session::get('user_name'));
@@ -6264,7 +6259,7 @@ class ReportsController extends Controller
             }
 
             // Updated by Abdullah 21-11-23 start
-            elseif ($request->input('lossesReportType') == 'availability-losses-toe') {
+            elseif($request->input('lossesReportType') == 'availability-losses-toe') {
                 // dd($request->all());
                 $data['report_type'] = $request->report_type;
                 $cat = Categories::find($request->errorcat);
@@ -6281,7 +6276,7 @@ class ReportsController extends Controller
 
                 // dd($records);
 
-                if (count($records) > 0) {
+                if(count($records) > 0) {
                     $data['records'] = [];
                     $data['graphRecords'] = [];
                     $startDate = $records[0]->run_date_time;
@@ -6296,25 +6291,25 @@ class ReportsController extends Controller
                     // Updated by Abdullah 23-11-23 end
 
 
-                    for ($i = 0; $i < count($records); $i++) {
-                        if (isset($records[$i + 1])) {
+                    for($i = 0; $i < count($records); $i++) {
+                        if(isset($records[$i + 1])) {
 
-                            if ($records[$i]->error_id != $records[$i + 1]->error_id) {
+                            if($records[$i]->error_id != $records[$i + 1]->error_id) {
                                 $endDate = $records[$i]->run_date_time;
                                 $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                                 $duration = ((($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60);
 
                                 //   updated by Abdullah 23-11-23 start
-                                foreach ($idleErrors as $idleError) {
-                                    if ($idleError->id == $records[$i]->error_id) {
+                                foreach($idleErrors as $idleError) {
+                                    if($idleError->id == $records[$i]->error_id) {
                                         $idleTime += $duration;
                                         // $idltime = $duration;
                                     }
                                 }
-                                //   updated by Abdullah 23-11-23 end
-                                if ($records[$i]->error_id != 2) {
-                                    if (isset($errorIds)) {
-                                        if (in_array($records[$i]->error_id, $errorIds)) {
+                                //   updated by Abdullah 23-11-23 end .
+                                if($records[$i]->error_id != 2) {
+                                    if(isset($errorIds)) {
+                                        if(in_array($records[$i]->error_id, $errorIds)) {
                                             array_push($data['records'], [
                                                 "from" => $startDate,
                                                 "to" => $endDate,
@@ -6345,17 +6340,17 @@ class ReportsController extends Controller
                             $duration = ((($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60);
 
                             //   Updated by Abdullah 23-11-23 start
-                            foreach ($idleErrors as $idleError) {
-                                if ($idleError->id == $records[$i]->error_id) {
+                            foreach($idleErrors as $idleError) {
+                                if($idleError->id == $records[$i]->error_id) {
                                     $idleTime += $duration;
                                     // $idltime = $duration;
                                 }
                             }
 
                             //   Updated by Abdullah 23-11-23 end
-                            if ($records[$i]->error_id != 2) {
-                                if (isset($errorIds)) {
-                                    if (in_array($records[$i]->error_id, $errorIds)) {
+                            if($records[$i]->error_id != 2) {
+                                if(isset($errorIds)) {
+                                    if(in_array($records[$i]->error_id, $errorIds)) {
 
                                         array_push($data['records'], [
                                             "from" => $startDate,
@@ -6384,11 +6379,11 @@ class ReportsController extends Controller
                     $count = 0;
                     $alreadyDone = [];
                     $duration = 0;
-                    for ($i = 0; $i < count($data['records']); $i++) {
-                        if (!in_array($data['records'][$i]['error_id'], $alreadyDone)) {
+                    for($i = 0; $i < count($data['records']); $i++) {
+                        if(!in_array($data['records'][$i]['error_id'], $alreadyDone)) {
 
-                            for ($j = 0; $j < count($data['records']); $j++) {
-                                if ($data['records'][$i]['error_id'] == $data['records'][$j]['error_id']) {
+                            for($j = 0; $j < count($data['records']); $j++) {
+                                if($data['records'][$i]['error_id'] == $data['records'][$j]['error_id']) {
                                     $count++;
                                     $duration += $data['records'][$j]['duration'];
                                 }
@@ -6412,7 +6407,7 @@ class ReportsController extends Controller
                     // dd($data['budgetedTime']);
                     //   Updated by Abdullah 23-11-23 end
 
-                    if (Session::get('rights') == 0) {
+                    if(Session::get('rights') == 0) {
                         $data['user'] = Users::find($loginRecord[0]->user_id);
                     } else {
                         $data['user'] = Users::find(Session::get('user_name'));
@@ -6433,30 +6428,29 @@ class ReportsController extends Controller
         }
     }
 
-    public function jobPerformance($machine_id, $from, $to, $job_id, $shift)
-    {
+    public function jobPerformance($machine_id, $from, $to, $job_id, $shift) {
         $data['from'] = $from;
         $data['to'] = $to;
         $data['shift'] = $shiftSelection = $shift = unserialize($shift);
-        if ($shiftSelection[0] == 'All-Day') {
+        if($shiftSelection[0] == 'All-Day') {
             $machine = Machine::find($data['machine']->id);
             $shifts_id = [];
-            foreach ($machine->section->department->businessUnit->company->shifts as $shift) {
+            foreach($machine->section->department->businessUnit->company->shifts as $shift) {
                 array_push($shifts_id, $shift->id);
             }
 
             $minStarted = Shift::find($shifts_id[0])->min_started;
             $minEnded = Shift::find($shifts_id[count($shifts_id) - 1])->min_ended;
 
-            $startDateTime = date('Y-m-d H:i:s', strtotime($data['from'] . ' + ' . $minStarted . ' minutes'));
-            $endDateTime = date('Y-m-d H:i:s', strtotime($data['to'] . ' + ' . $minEnded . ' minutes'));
+            $startDateTime = date('Y-m-d H:i:s', strtotime($data['from'].' + '.$minStarted.' minutes'));
+            $endDateTime = date('Y-m-d H:i:s', strtotime($data['to'].' + '.$minEnded.' minutes'));
 
         } else {
 
             $minStarted = Shift::find($shiftSelection[0])->min_started;
             $minEnded = Shift::find($shiftSelection[count($shiftSelection) - 1])->min_ended;
-            $startDateTime = date('Y-m-d H:i:s', strtotime($from . ' + ' . $minStarted . ' minutes'));
-            $endDateTime = date('Y-m-d H:i:s', strtotime($from . ' + ' . $minEnded . ' minutes'));
+            $startDateTime = date('Y-m-d H:i:s', strtotime($from.' + '.$minStarted.' minutes'));
+            $endDateTime = date('Y-m-d H:i:s', strtotime($from.' + '.$minEnded.' minutes'));
         }
         $records = DB::table('records')
             ->join('errors', 'errors.id', '=', 'records.error_id')
@@ -6498,7 +6492,7 @@ class ReportsController extends Controller
         $runningCodes = Error::select('id')->where('category', '=', 'Running')->get();
         $jobWaitingCodes = Error::select('id')->where('category', '=', 'Job Waiting')->get();
 
-        if (count($records) > 0) {
+        if(count($records) > 0) {
             $data['records'] = [];
             $data['negativeRecords'] = [];
             $startDate = $records[0]->run_date_time;
@@ -6510,27 +6504,27 @@ class ReportsController extends Controller
             $production = 0;
             $actualSpeed = 0;
             $jobProduction = 0;
-            if (count($records) > 1) {
-                for ($i = 0; $i < count($records); $i++) {
-                    if (isset($records[$i + 1])) {
-                        if ($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id) {
+            if(count($records) > 1) {
+                for($i = 0; $i < count($records); $i++) {
+                    if(isset($records[$i + 1])) {
+                        if($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id) {
                             $endDate = $records[$i]->run_date_time;
                             $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                             $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                            foreach ($runningCodes as $runningCode) {
-                                if ($runningCode->id == $records[$i]->error_id) {
+                            foreach($runningCodes as $runningCode) {
+                                if($runningCode->id == $records[$i]->error_id) {
                                     $runTime += $duration;
                                     $production += $records[$i]->length - $oldLength;
                                     $jobProduction += $records[$i]->length - $oldLength;
                                 }
                             }
-                            foreach ($idleErrors as $idleError) {
-                                if ($idleError->id == $records[$i]->error_id) {
+                            foreach($idleErrors as $idleError) {
+                                if($idleError->id == $records[$i]->error_id) {
                                     $idleTime += $duration;
                                 }
                             }
-                            foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                if ($jobWaitingCode->id == $records[$i]->error_id) {
+                            foreach($jobWaitingCodes as $jobWaitingCode) {
+                                if($jobWaitingCode->id == $records[$i]->error_id) {
                                     $jobWaitTime += $duration;
                                 }
                             }
@@ -6558,20 +6552,20 @@ class ReportsController extends Controller
                         $endDate = $records[$i]->run_date_time;
                         $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                         $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                        foreach ($runningCodes as $runningCode) {
-                            if ($runningCode->id == $records[$i]->error_id) {
+                        foreach($runningCodes as $runningCode) {
+                            if($runningCode->id == $records[$i]->error_id) {
                                 $runTime += $duration;
                                 $production += $records[$i]->length - $oldLength;
                                 $jobProduction += $records[$i]->length - $oldLength;
                             }
                         }
-                        foreach ($idleErrors as $idleError) {
-                            if ($idleError->id == $records[$i]->error_id) {
+                        foreach($idleErrors as $idleError) {
+                            if($idleError->id == $records[$i]->error_id) {
                                 $idleTime += $duration;
                             }
                         }
-                        foreach ($jobWaitingCodes as $jobWaitingCode) {
-                            if ($jobWaitingCode->id == $records[$i]->error_id) {
+                        foreach($jobWaitingCodes as $jobWaitingCode) {
+                            if($jobWaitingCode->id == $records[$i]->error_id) {
                                 $jobWaitTime += $duration;
                             }
                         }
@@ -6599,8 +6593,8 @@ class ReportsController extends Controller
                     }
 
                 }
-                for ($k = 0; $k < count($data['records']); $k++) {
-                    if (!isset($data['records'][$k][0]['jobProduction'])) {
+                for($k = 0; $k < count($data['records']); $k++) {
+                    if(!isset($data['records'][$k][0]['jobProduction'])) {
                         array_push($data['records'][$k], [
                             "jobProduction" => $jobProduction
                         ]);
@@ -6611,11 +6605,11 @@ class ReportsController extends Controller
             $data['runningTime'] = $runTime;
             $data['unPlannedDowntime'] = $totalTime - $runTime;
         }
-        if (Session::get('rights') == 0) {
+        if(Session::get('rights') == 0) {
             $data['layout'] = 'web-layout';
-        } elseif (Session::get('rights') == 1) {
+        } elseif(Session::get('rights') == 1) {
             $data['layout'] = 'admin-layout';
-        } elseif (Session::get('rights') == 2) {
+        } elseif(Session::get('rights') == 2) {
             $data['layout'] = 'power-user-layout';
         }
         $data['path'] = Route::getFacadeRoot()->current()->uri();
@@ -6624,12 +6618,11 @@ class ReportsController extends Controller
         return view('roto.reports', $row);
     }
 
-    public function errorHistory($machine_id, $from, $to, $error_id, $shift)
-    {
+    public function errorHistory($machine_id, $from, $to, $error_id, $shift) {
         $data['machine'] = Machine::find($machine_id);
         //$data['user'] = Users::find(Session::get('user_name'));
         //dd(Session::get('user_name'));
-        if (Session::get('rights') == 0) {
+        if(Session::get('rights') == 0) {
             $loginRecord = LoginRecord::where('machine_id', '=', $machine_id)->get();
             $data['user'] = Users::find($loginRecord[0]->user_id);
         } else {
@@ -6640,28 +6633,28 @@ class ReportsController extends Controller
         $data['to'] = $to;
         $data['shift'] = $shiftSelection = $shift = unserialize($shift);
         $machine = $data['machine'];
-        if ($shiftSelection[0] == 'All-Day') {
+        if($shiftSelection[0] == 'All-Day') {
             $machine = Machine::find($data['machine']->id);
             $shifts_id = [];
-            foreach ($machine->section->department->businessUnit->company->shifts as $shift) {
+            foreach($machine->section->department->businessUnit->company->shifts as $shift) {
                 array_push($shifts_id, $shift->id);
             }
 
             $minStarted = Shift::find($shifts_id[0])->min_started;
             $minEnded = Shift::find($shifts_id[count($shifts_id) - 1])->min_ended;
 
-            $startDateTime = date('Y-m-d H:i:s', strtotime($data['from'] . ' + ' . $minStarted . ' minutes'));
-            $endDateTime = date('Y-m-d H:i:s', strtotime($data['to'] . ' + ' . $minEnded . ' minutes'));
+            $startDateTime = date('Y-m-d H:i:s', strtotime($data['from'].' + '.$minStarted.' minutes'));
+            $endDateTime = date('Y-m-d H:i:s', strtotime($data['to'].' + '.$minEnded.' minutes'));
 
         } else {
 
             $minStarted = Shift::find($shiftSelection[0])->min_started;
             $minEnded = Shift::find($shiftSelection[count($shiftSelection) - 1])->min_ended;
-            $startDateTime = date('Y-m-d H:i:s', strtotime($from . ' + ' . $minStarted . ' minutes'));
-            $endDateTime = date('Y-m-d H:i:s', strtotime($from . ' + ' . $minEnded . ' minutes'));
+            $startDateTime = date('Y-m-d H:i:s', strtotime($from.' + '.$minStarted.' minutes'));
+            $endDateTime = date('Y-m-d H:i:s', strtotime($from.' + '.$minEnded.' minutes'));
         }
 
-        if (date('Y-m-d H:i:s') < $endDateTime) {
+        if(date('Y-m-d H:i:s') < $endDateTime) {
             $endDateTime = date('Y-m-d H:i:s');
         }
 
@@ -6687,17 +6680,17 @@ class ReportsController extends Controller
             ->where('run_date_time', '<=', $endDateTime)
             ->orderby('run_date_time', 'ASC')
             ->get();
-        if (count($records) > 0) {
+        if(count($records) > 0) {
             $data['records'] = [];
             $startDate = $records[0]->run_date_time;
-            for ($i = 0; $i < count($records); $i++) {
-                if (isset($records[$i + 1])) {
-                    if ($records[$i]->error_id != $records[$i + 1]->error_id) {
+            for($i = 0; $i < count($records); $i++) {
+                if(isset($records[$i + 1])) {
+                    if($records[$i]->error_id != $records[$i + 1]->error_id) {
 
                         $endDate = $records[$i]->run_date_time;
                         $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                         $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                        if ($records[$i]->error_id == $error_id) {
+                        if($records[$i]->error_id == $error_id) {
                             array_push($data['records'], [
                                 "from" => $startDate,
                                 "to" => $endDate,
@@ -6719,7 +6712,7 @@ class ReportsController extends Controller
                     $endDate = $records[$i]->run_date_time;
                     $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                     $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
-                    if ($records[$i]->error_id == $error_id) {
+                    if($records[$i]->error_id == $error_id) {
 
                         array_push($data['records'], [
                             "from" => $startDate,
@@ -6739,13 +6732,13 @@ class ReportsController extends Controller
                 }
             }
 
-            if (Session::get('rights') == 0) {
+            if(Session::get('rights') == 0) {
                 $data['layout'] = 'web-layout';
-            } elseif (Session::get('rights') == 1) {
+            } elseif(Session::get('rights') == 1) {
                 $data['layout'] = 'admin-layout';
-            } elseif (Session::get('rights') == 2) {
+            } elseif(Session::get('rights') == 2) {
                 $data['layout'] = 'power-user-layout';
-            } elseif (Session::get('rights') == 3) {
+            } elseif(Session::get('rights') == 3) {
                 $data['layout'] = 'reporting-user-layout';
             }
             $data['error'] = Error::find($error_id);
@@ -6757,12 +6750,11 @@ class ReportsController extends Controller
         }
     }
 
-    public function resolveNegatives($startDateTime, $endDateTime, $machine_id)
-    {
+    public function resolveNegatives($startDateTime, $endDateTime, $machine_id) {
         $negativeRecords = Record::where('run_date_time', '>=', $startDateTime)->where('run_date_time', '<=', $endDateTime)->where('machine_id', '=', $machine_id)->orderby('run_date_time', 'ASC')->get();
 
         DB::beginTransaction();
-        for ($i = 0; $i < count($negativeRecords); $i++) {
+        for($i = 0; $i < count($negativeRecords); $i++) {
             $run_date_time = date_create($negativeRecords[$i]->run_date_time);
             $created_at = date_create($negativeRecords[$i]->created_at);
             $diff = $created_at->diff($run_date_time);
@@ -6775,13 +6767,13 @@ class ReportsController extends Controller
 //                $negativeRecords[$i]->save();
 //            }
 //            else{
-            if (isset($negativeRecords[$i + 1])) {
+            if(isset($negativeRecords[$i + 1])) {
                 //dd($negativeRecords[$i]->run_date_time);
-                if ($negativeRecords[$i]->error_id == $negativeRecords[$i + 1]->error_id && $negativeRecords[$i]->job_id == $negativeRecords[$i + 1]->job_id && $negativeRecords[$i]->user_id == $negativeRecords[$i + 1]->user_id && $negativeRecords[$i]->machine_id == $negativeRecords[$i + 1]->machine_id) {
+                if($negativeRecords[$i]->error_id == $negativeRecords[$i + 1]->error_id && $negativeRecords[$i]->job_id == $negativeRecords[$i + 1]->job_id && $negativeRecords[$i]->user_id == $negativeRecords[$i + 1]->user_id && $negativeRecords[$i]->machine_id == $negativeRecords[$i + 1]->machine_id) {
                     //dd($negativeRecords[$i]->run_date_time);
-                    if ($negativeRecords[$i + 1]->length < $negativeRecords[$i]->length) {
+                    if($negativeRecords[$i + 1]->length < $negativeRecords[$i]->length) {
                         $job = Job::where('product_id', '=', $negativeRecords[$i + 1]->job->product_id)->where('id', '!=', $negativeRecords[$i + 1]->job_id)->first();
-                        if (!empty($job)) {
+                        if(!empty($job)) {
                             $negativeRecords[$i + 1]->job_id = $job->id;
                             $negativeRecords[$i + 1]->save();
                         } else {
@@ -6789,11 +6781,11 @@ class ReportsController extends Controller
                             $negativeRecords[$i + 1]->save();
                         }
                     }
-                } elseif ($negativeRecords[$i]->error_id != $negativeRecords[$i + 1]->error_id && $negativeRecords[$i]->job_id == $negativeRecords[$i + 1]->job_id && $negativeRecords[$i]->user_id == $negativeRecords[$i + 1]->user_id && $negativeRecords[$i]->machine_id == $negativeRecords[$i + 1]->machine_id) {
+                } elseif($negativeRecords[$i]->error_id != $negativeRecords[$i + 1]->error_id && $negativeRecords[$i]->job_id == $negativeRecords[$i + 1]->job_id && $negativeRecords[$i]->user_id == $negativeRecords[$i + 1]->user_id && $negativeRecords[$i]->machine_id == $negativeRecords[$i + 1]->machine_id) {
                     //dd($negativeRecords[$i]->run_date_time);
-                    if ($negativeRecords[$i + 1]->length < $negativeRecords[$i]->length) {
+                    if($negativeRecords[$i + 1]->length < $negativeRecords[$i]->length) {
                         $job = Job::where('product_id', '=', $negativeRecords[$i + 1]->job->product_id)->where('id', '!=', $negativeRecords[$i + 1]->job_id)->first();
-                        if (!empty($job)) {
+                        if(!empty($job)) {
                             $negativeRecords[$i + 1]->job_id = $job->id;
                             $negativeRecords[$i + 1]->save();
                         } else {
@@ -6813,19 +6805,17 @@ class ReportsController extends Controller
         DB::commit();
     }
 
-    public function calculateMinutes($fromTime, $toTime)
-    {
+    public function calculateMinutes($fromTime, $toTime) {
         $diff = date_diff(date_create($toTime), date_create($fromTime));
         $total = (($diff->y * 365.25 + $diff->m * 30 + $diff->d) * 24 + $diff->h) * 60 + $diff->i + $diff->s / 60;
-        if ($diff->invert) {
+        if($diff->invert) {
             return -1 * $total;
         } else {
             return $total;
         }
     }
 
-    public function checkReport()
-    {
+    public function checkReport() {
         /*$records = DB::table('records')
             ->leftJoin('errors', 'errors.id', '=', 'records.error_id')
             ->leftJoin('users', 'users.id', '=', 'records.user_id')
@@ -6848,14 +6838,13 @@ class ReportsController extends Controller
             ->get();*/
     }
 
-    public function exportPDF(Request $request)
-    {
+    public function exportPDF(Request $request) {
         $data['view'] = $request->input('view');
         $view = View::make('layouts.export-layout', $data)->render();
 
         $pdf = new PDF('L', PDF_UNIT, 'A4', true, 'UTF-8', false);
-        if (@file_exists(dirname(__FILE__) . '/lang/eng.php')) {
-            require_once(dirname(__FILE__) . '/lang/eng.php');
+        if(@file_exists(dirname(__FILE__).'/lang/eng.php')) {
+            require_once(dirname(__FILE__).'/lang/eng.php');
             $pdf::setLanguageArray($l);
         }
         $pdf::AddPage();
@@ -6863,13 +6852,12 @@ class ReportsController extends Controller
         $pdf::lastPage();
         ob_end_clean();
         $filepath = 'checking.pdf';
-        $pdf::Output('C:\\xampp\\htdocs\\rotoeye\\exports\\' . $filepath, 'F');
+        $pdf::Output('C:\\xampp\\htdocs\\rotoeye\\exports\\'.$filepath, 'F');
     }
 
-    public function importgroupDashboard(Request $request)
-    {
+    public function importgroupDashboard(Request $request) {
         $user_id = Session::get('user_id');
-        if (isset($user_id)) {
+        if(isset($user_id)) {
             //  dd("asd");
             $data['path'] = Route::getFacadeRoot()->current()->uri();
             // $machine_id = Crypt::decrypt($id);
@@ -6877,7 +6865,7 @@ class ReportsController extends Controller
 
             // $loginRecord = LoginRecord::where('machine_id', '=', $machine_id)->get();
             // $data['machine'] = Machine::find($machine_id);
-            if (Session::get('rights') == 0) {
+            if(Session::get('rights') == 0) {
                 $data['user'] = Users::find($loginRecord[0]->user_id);
             } else {
                 $data['user'] = Users::find(Session::get('user_name'));
@@ -6891,8 +6879,7 @@ class ReportsController extends Controller
         }
 
     }
-    public function postimportgroupDashboard(Request $request)
-    {
+    public function postimportgroupDashboard(Request $request) {
         //dd($request->all());
         $machine_id = $request->machine_id;
         $dateRange = $request->daterange;
@@ -6901,11 +6888,11 @@ class ReportsController extends Controller
         $to_date = date('Y-m-d', strtotime($daterange[1]));
         //dd($dateRange);
         $shiftSelection[] = 'All-Day'; //$request->input('shiftSelection');
-        if ($shiftSelection[0] == 'All-Day') {
+        if($shiftSelection[0] == 'All-Day') {
             //dd("sd");
             $machine = Machine::find($machine_id);
             $shifts_id = [];
-            foreach ($machine->section->department->businessUnit->company->shifts as $shift) {
+            foreach($machine->section->department->businessUnit->company->shifts as $shift) {
                 array_push($shifts_id, $shift->id);
             }
             //dd($shifts_id);
@@ -6917,17 +6904,17 @@ class ReportsController extends Controller
             $data['from'] = $from_date;
             $data['to'] = $to_date;
             // dd($data['from']);
-            $startDateTime = date('Y-m-d H:i:s', strtotime($data['from'] . ' + ' . $minStarted . ' minutes'));
-            $endDateTime = date('Y-m-d H:i:s', strtotime($data['to'] . ' + ' . $minEnded . ' minutes'));
+            $startDateTime = date('Y-m-d H:i:s', strtotime($data['from'].' + '.$minStarted.' minutes'));
+            $endDateTime = date('Y-m-d H:i:s', strtotime($data['to'].' + '.$minEnded.' minutes'));
             // dd($endDateTime);
         } else {
             $minStarted = Shift::find($shiftSelection[0])->min_started;
             $minEnded = Shift::find($shiftSelection[count($shiftSelection) - 1])->min_ended;
-            $startDateTime = date('Y-m-d H:i:s', strtotime($date . ' + ' . $minStarted . ' minutes'));
-            $endDateTime = date('Y-m-d H:i:s', strtotime($date . ' + ' . $minEnded . ' minutes'));
+            $startDateTime = date('Y-m-d H:i:s', strtotime($date.' + '.$minStarted.' minutes'));
+            $endDateTime = date('Y-m-d H:i:s', strtotime($date.' + '.$minEnded.' minutes'));
         }
 
-        if (date('Y-m-d H:i:s') < $endDateTime) {
+        if(date('Y-m-d H:i:s') < $endDateTime) {
             $endDateTime = date('Y-m-d H:i:s');
         }
 
@@ -6976,7 +6963,7 @@ class ReportsController extends Controller
             ->orderby('run_date_time', 'ASC')
             ->get();
         //dd(count($records));
-        if (count($records) > 0) {
+        if(count($records) > 0) {
             $data['records'] = [];
             $data['negativeRecords'] = [];
             $startDate = $records[0]->run_date_time;
@@ -6993,37 +6980,37 @@ class ReportsController extends Controller
             $totalLength = 0;
 
             $totalTime = (strtotime($endDateTime) - strtotime($startDateTime)) / 60;
-            if (count($records) > 1) {
-                for ($i = 0; $i < count($records); $i++) {
-                    if (isset($records[$i + 1])) {
-                        if ($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
+            if(count($records) > 1) {
+                for($i = 0; $i < count($records); $i++) {
+                    if(isset($records[$i + 1])) {
+                        if($records[$i]->error_id != $records[$i + 1]->error_id || $records[$i]->user_id != $records[$i + 1]->user_id || $records[$i]->job_id != $records[$i + 1]->job_id) {
                             $endDate = $records[$i]->run_date_time;
                             $difference = date_diff(date_create(date('d-M-Y H:i:s', strtotime($startDate))), date_create(date('d-M-Y H:i:s', strtotime($endDate))));
                             $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
                             $totalLength += $records[$i]->length - $oldLength;
 
-                            if ($data['machine']->time_uom == 'Hr') {
-                                if ($duration == 0) {
+                            if($data['machine']->time_uom == 'Hr') {
+                                if($duration == 0) {
                                     $instantSpeed = 0;
                                 } else {
                                     $instantSpeed = (($records[$i]->length - $oldLength) / $duration) * 60;
                                 }
-                            } elseif ($data['machine']->time_uom == 'Min') {
-                                if ($duration == 0) {
+                            } elseif($data['machine']->time_uom == 'Min') {
+                                if($duration == 0) {
                                     $instantSpeed = 0;
                                 } else {
                                     $instantSpeed = ($records[$i]->length - $oldLength) / $duration;
                                 }
                             } else {
-                                if ($duration == 0) {
+                                if($duration == 0) {
                                     $instantSpeed = 0;
                                 } else {
                                     $instantSpeed = (($records[$i]->length - $oldLength) / $duration) / 60;
                                 }
                             }
 
-                            foreach ($runningCodes as $runningCode) {
-                                if ($runningCode->id == $records[$i]->error_id) {
+                            foreach($runningCodes as $runningCode) {
+                                if($runningCode->id == $records[$i]->error_id) {
                                     $runTime += $duration;
                                     $jobRunTime += $duration;
                                     $production += $records[$i]->length - $oldLength;
@@ -7031,24 +7018,24 @@ class ReportsController extends Controller
                                 }
                             }
                             //Waste Codes Added
-                            foreach ($wasteCodes as $wasteCode) {
-                                if ($wasteCode->id == $records[$i]->error_id) {
+                            foreach($wasteCodes as $wasteCode) {
+                                if($wasteCode->id == $records[$i]->error_id) {
                                     $waste += $records[$i]->length - $oldLength;
                                     $jobWaste += $records[$i]->length - $oldLength;
                                 }
                             }
-                            foreach ($idleErrors as $idleError) {
-                                if ($idleError->id == $records[$i]->error_id) {
+                            foreach($idleErrors as $idleError) {
+                                if($idleError->id == $records[$i]->error_id) {
                                     $idleTime += $duration;
                                 }
                             }
-                            foreach ($jobWaitingCodes as $jobWaitingCode) {
-                                if ($jobWaitingCode->id == $records[$i]->error_id) {
+                            foreach($jobWaitingCodes as $jobWaitingCode) {
+                                if($jobWaitingCode->id == $records[$i]->error_id) {
                                     $jobWaitTime += $duration;
                                 }
                             }
 
-                            if ($records[$i]->length - $oldLength < 0) {
+                            if($records[$i]->length - $oldLength < 0) {
                                 //
                             }
 
@@ -7074,24 +7061,24 @@ class ReportsController extends Controller
                             ]);
 
                             $startDate = $endDate;
-                            if ($records[$i]->job_id != $records[$i + 1]->job_id) {
+                            if($records[$i]->job_id != $records[$i + 1]->job_id) {
                                 $oldLength = $records[$i + 1]->length;
-                                if ($jobRunTime == 0) {
+                                if($jobRunTime == 0) {
                                     $jobPerformance = 0;
                                     $jobAverageSpeed = 0;
                                 } else {
-                                    if ($data['machine']->time_uom == 'Min') {
+                                    if($data['machine']->time_uom == 'Min') {
                                         $jobPerformance = (($jobProduction / $jobRunTime) / $data['machine']->max_speed) * 100;
                                         $jobAverageSpeed = $jobProduction / $jobRunTime;
-                                    } elseif ($data['machine']->time_uom == 'Hr') {
+                                    } elseif($data['machine']->time_uom == 'Hr') {
                                         $jobPerformance = (($jobProduction / $jobRunTime) * 60 / $data['machine']->max_speed) * 100;
                                         $jobAverageSpeed = ($jobProduction / $jobRunTime) * 60;
-                                    } elseif ($data['machine']->time_uom == 'Sec') {
+                                    } elseif($data['machine']->time_uom == 'Sec') {
                                         $jobPerformance = ((($jobProduction / $jobRunTime) / 60) / $data['machine']->max_speed) * 100;
                                         $jobAverageSpeed = (($jobProduction / $jobRunTime) / 60);
                                     }
                                 }
-                                for ($j = 0; $j < count($data['records']); $j++) {
+                                for($j = 0; $j < count($data['records']); $j++) {
                                     array_push($data['records'][$j], [
                                         "jobProduction" => $jobProduction,
                                         "jobPerformance" => $jobPerformance,
@@ -7113,51 +7100,51 @@ class ReportsController extends Controller
                         $duration = (($difference->y * 365 + $difference->m * 30 + $difference->d) * 24 + $difference->h) * 60 + $difference->i + $difference->s / 60;
                         $totalLength += $records[$i]->length - $oldLength;
 
-                        if ($data['machine']->time_uom == 'Hr') {
-                            if ($duration == 0) {
+                        if($data['machine']->time_uom == 'Hr') {
+                            if($duration == 0) {
                                 $instantSpeed = 0;
                             } else {
                                 $instantSpeed = (($records[$i]->length - $oldLength) / $duration) * 60;
                             }
-                        } elseif ($data['machine']->time_uom == 'Min') {
-                            if ($duration == 0) {
+                        } elseif($data['machine']->time_uom == 'Min') {
+                            if($duration == 0) {
                                 $instantSpeed = 0;
                             } else {
                                 $instantSpeed = ($records[$i]->length - $oldLength) / $duration;
                             }
                         } else {
-                            if ($duration == 0) {
+                            if($duration == 0) {
                                 $instantSpeed = 0;
                             } else {
                                 $instantSpeed = (($records[$i]->length - $oldLength) / $duration) / 60;
                             }
                         }
 
-                        foreach ($runningCodes as $runningCode) {
-                            if ($runningCode->id == $records[$i]->error_id) {
+                        foreach($runningCodes as $runningCode) {
+                            if($runningCode->id == $records[$i]->error_id) {
                                 $runTime += $duration;
                                 $production += $records[$i]->length - $oldLength;
                                 $jobProduction += $records[$i]->length - $oldLength;
                             }
                         }
 
-                        foreach ($wasteCodes as $wasteCode) {
-                            if ($wasteCode->id == $records[$i]->error_id) {
+                        foreach($wasteCodes as $wasteCode) {
+                            if($wasteCode->id == $records[$i]->error_id) {
                                 $waste += $records[$i]->length - $oldLength;
                                 $jobWaste += $records[$i]->length - $oldLength;
                             }
                         }
-                        foreach ($idleErrors as $idleError) {
-                            if ($idleError->id == $records[$i]->error_id) {
+                        foreach($idleErrors as $idleError) {
+                            if($idleError->id == $records[$i]->error_id) {
                                 $idleTime += $duration;
                             }
                         }
-                        foreach ($jobWaitingCodes as $jobWaitingCode) {
-                            if ($jobWaitingCode->id == $records[$i]->error_id) {
+                        foreach($jobWaitingCodes as $jobWaitingCode) {
+                            if($jobWaitingCode->id == $records[$i]->error_id) {
                                 $jobWaitTime += $duration;
                             }
                         }
-                        if ($records[$i]->length - $oldLength < 0) {
+                        if($records[$i]->length - $oldLength < 0) {
                             //
                         }
                         array_push($data['records'], [
@@ -7187,23 +7174,23 @@ class ReportsController extends Controller
                 }
 
 
-                for ($k = 0; $k < count($data['records']); $k++) {
-                    if ($jobRunTime == 0) {
+                for($k = 0; $k < count($data['records']); $k++) {
+                    if($jobRunTime == 0) {
                         $jobPerformance = 0;
                         $jobAverageSpeed = 0;
                     } else {
-                        if ($data['machine']->time_uom == 'Min') {
+                        if($data['machine']->time_uom == 'Min') {
                             $jobPerformance = (($jobProduction / $jobRunTime) / $data['machine']->max_speed) * 100;
                             $jobAverageSpeed = $jobProduction / $jobRunTime;
-                        } elseif ($data['machine']->time_uom == 'Hr') {
+                        } elseif($data['machine']->time_uom == 'Hr') {
                             $jobPerformance = (($jobProduction / $jobRunTime) * 60 / $data['machine']->max_speed) * 100;
                             $jobAverageSpeed = ($jobProduction / $jobRunTime) * 60;
-                        } elseif ($data['machine']->time_uom == 'Sec') {
+                        } elseif($data['machine']->time_uom == 'Sec') {
                             $jobPerformance = ((($jobProduction / $jobRunTime) / 60) / $data['machine']->max_speed) * 100;
                             $jobAverageSpeed = (($jobProduction / $jobRunTime) / 60);
                         }
                     }
-                    if (!isset($data['records'][$k][0]['jobProduction']) || !isset($data['records'][$k][0]['jobPerformance'])) {
+                    if(!isset($data['records'][$k][0]['jobProduction']) || !isset($data['records'][$k][0]['jobPerformance'])) {
                         array_push($data['records'][$k], [
                             "jobProduction" => $jobProduction,
                             "jobPerformance" => $jobPerformance,
@@ -7214,10 +7201,10 @@ class ReportsController extends Controller
                     }
                 }
 
-                if ($runTime > 0) {
-                    if ($data['machine']->time_uom == 'Hr') {
+                if($runTime > 0) {
+                    if($data['machine']->time_uom == 'Hr') {
                         $actualSpeed = $production / $runTime * 60;
-                    } elseif ($data['machine']->time_uom == 'Min') {
+                    } elseif($data['machine']->time_uom == 'Min') {
                         $actualSpeed = $production / $runTime;
                     } else {
                         $actualSpeed = $production / $runTime / 60;
@@ -7226,7 +7213,7 @@ class ReportsController extends Controller
                     $actualSpeed = 0;
                 }
             }
-            if (Session::get('rights') == 0) {
+            if(Session::get('rights') == 0) {
                 $data['user'] = Users::find($loginRecord[0]->user_id);
             } else {
                 $data['user'] = Users::find(Session::get('user_name'));
@@ -7264,10 +7251,10 @@ class ReportsController extends Controller
             })->where('machine_id', '=', $data['machine']->id)->get();
 
 
-            if (isset($existingRecords)) {
-                if (count($existingRecords) > 0) {
+            if(isset($existingRecords)) {
+                if(count($existingRecords) > 0) {
                     //if(count($existingRecords) < count($data['records'])){
-                    foreach ($existingRecords as $r) {
+                    foreach($existingRecords as $r) {
                         $r->delete();
                     }
                     // }
@@ -7276,14 +7263,14 @@ class ReportsController extends Controller
 
             $dateParts = explode('/', $data['date']);
             $month = $dateParts[0];
-            $monthInt = (int) $month;
+            $monthInt = (int)$month;
             $monthZeroPadded = sprintf("%02d", $monthInt);
 
             $dateStr = $data['date'];
             $timestamp = strtotime($dateStr);
             $formattedDate = $data['startDateTime']; //date("Y-m-d", $timestamp);
             //dd($formattedDate);
-            foreach ($data['records'] as $record) {
+            foreach($data['records'] as $record) {
                 // dd($machine->section);
                 $reportdata = new GroupProductionReport();
                 $reportdata->job_no = $record['job_id'];
@@ -7326,8 +7313,7 @@ class ReportsController extends Controller
         }
 
     }
-    public function splittingRecords($record, $nextrecord, $endd, $data)
-    {
+    public function splittingRecords($record, $nextrecord, $endd, $data) {
         //dump($data);
         // dump($record);
 
